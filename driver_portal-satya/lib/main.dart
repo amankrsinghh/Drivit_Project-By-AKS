@@ -13,7 +13,7 @@ import 'services/api_service.dart';
 import 'services/network_service.dart';
 import 'driver_app/splash/views/driver_splash_view.dart';
 
-/// its Aman Singh Hello
+/// hi my name is aman kumar singh
 void main() async {
   /// hi its me aman
   WidgetsFlutterBinding.ensureInitialized();
