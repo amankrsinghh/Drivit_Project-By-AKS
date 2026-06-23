@@ -1,0 +1,11 @@
+{
+  "folders": [
+    {
+      "path": ".."
+    }
+  ],
+  "settings": {
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "dart.flutterSdkPath": ".fvm/versions/3.38.6"
+  }
+}

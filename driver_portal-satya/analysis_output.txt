@@ -1,0 +1,39 @@
+Analyzing driver_portal-satya...                                
+
+   info • Invalid use of a private type in a public API • lib/driver_app/auth/controllers/driver_register_controller.dart:327:22 • library_private_types_in_public_api
+   info • Don't invoke 'print' in production code • lib/driver_app/chat/controllers/driver_chat_controller.dart:64:7 • avoid_print
+warning • The value of the field '_controller' isn't used • lib/driver_app/common/widgets/app_google_map.dart:34:24 • unused_field
+   info • 'setMapStyle' is deprecated and shouldn't be used. Use GoogleMap.style instead • lib/driver_app/common/widgets/app_google_map.dart:133:14 • deprecated_member_use
+   info • 'fromAssetImage' is deprecated and shouldn't be used. Use BitmapDescriptor.asset method instead • lib/driver_app/finding/controllers/driver_finding_controller.dart:46:43 • deprecated_member_use
+   info • 'fromBytes' is deprecated and shouldn't be used. Use BitmapDescriptor.bytes method instead • lib/driver_app/finding/controllers/driver_finding_controller.dart:69:45 • deprecated_member_use
+   info • 'fromBytes' is deprecated and shouldn't be used. Use BitmapDescriptor.bytes method instead • lib/driver_app/finding/controllers/driver_finding_controller.dart:101:29 • deprecated_member_use
+   info • 'desiredAccuracy' is deprecated and shouldn't be used. use settings parameter with AndroidSettings, AppleSettings, WebSettings, or LocationSettings • lib/driver_app/finding/controllers/driver_finding_controller.dart:164:37 • deprecated_member_use
+warning • The value of the field '_mapController' isn't used • lib/driver_app/finding/views/driver_finding_view.dart:18:24 • unused_field
+   info • 'setMapStyle' is deprecated and shouldn't be used. Use GoogleMap.style instead • lib/driver_app/finding/views/driver_finding_view.dart:157:20 • deprecated_member_use
+   info • Unnecessary use of multiple underscores • lib/driver_app/finding/views/driver_finding_view.dart:300:20 • unnecessary_underscores
+warning • The value of the field '_showOtpInput' isn't used • lib/driver_app/history/views/driver_trip_details_view.dart:395:16 • unused_field
+warning • The value of the field '_isSubmitting' isn't used • lib/driver_app/history/views/driver_trip_details_view.dart:397:16 • unused_field
+   info • 'desiredAccuracy' is deprecated and shouldn't be used. use settings parameter with AndroidSettings, AppleSettings, WebSettings, or LocationSettings • lib/driver_app/home/controllers/driver_home_controller.dart:128:9 • deprecated_member_use
+   info • 'timeLimit' is deprecated and shouldn't be used. use settings parameter with AndroidSettings, AppleSettings, WebSettings, or LocationSettings • lib/driver_app/home/controllers/driver_home_controller.dart:129:9 • deprecated_member_use
+   info • Don't invoke 'print' in production code • lib/driver_app/home/controllers/driver_home_controller.dart:423:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/driver_app/home/controllers/driver_home_controller.dart:506:7 • avoid_print
+   info • 'WillPopScope' is deprecated and shouldn't be used. Use PopScope instead. The Android predictive back feature will not work with WillPopScope. This feature was deprecated after v3.12.0-1.0.pre • lib/driver_app/home/views/driver_home_view.dart:25:14 • deprecated_member_use
+   info • The file name 'driver_about_us-view.dart' isn't a lower_case_with_underscores identifier • lib/driver_app/profile/views/driver_about_us-view.dart:1:1 • file_names
+   info • 'fromBytes' is deprecated and shouldn't be used. Use BitmapDescriptor.bytes method instead • lib/driver_app/trip/controllers/driver_new_request_controller.dart:57:45 • deprecated_member_use
+   info • 'fromBytes' is deprecated and shouldn't be used. Use BitmapDescriptor.bytes method instead • lib/driver_app/trip/controllers/driver_trip_controller.dart:190:45 • deprecated_member_use
+   info • 'desiredAccuracy' is deprecated and shouldn't be used. use settings parameter with AndroidSettings, AppleSettings, WebSettings, or LocationSettings • lib/driver_app/trip/controllers/driver_trip_controller.dart:414:13 • deprecated_member_use
+   info • 'timeLimit' is deprecated and shouldn't be used. use settings parameter with AndroidSettings, AppleSettings, WebSettings, or LocationSettings • lib/driver_app/trip/controllers/driver_trip_controller.dart:415:13 • deprecated_member_use
+   info • 'desiredAccuracy' is deprecated and shouldn't be used. use settings parameter with AndroidSettings, AppleSettings, WebSettings, or LocationSettings • lib/driver_app/trip/controllers/driver_trip_controller.dart:537:53 • deprecated_member_use
+warning • A value of type 'Null' can't be returned by the 'onError' handler because it must be assignable to 'FutureOr<Map<String, dynamic>>' • lib/driver_app/trip/controllers/driver_trip_controller.dart:552:29 • invalid_return_type_for_catch_error
+   info • 'zIndex' is deprecated and shouldn't be used. Use zIndexInt instead. On some platforms zIndex is truncated to an int, which can lead to incorrect/unstable ordering • lib/driver_app/trip/views/after_accept_location_view.dart:142:23 • deprecated_member_use
+   info • 'zIndex' is deprecated and shouldn't be used. Use zIndexInt instead. On some platforms zIndex is truncated to an int, which can lead to incorrect/unstable ordering • lib/driver_app/trip/views/after_accept_location_view.dart:156:23 • deprecated_member_use
+   info • 'zIndex' is deprecated and shouldn't be used. Use zIndexInt instead. On some platforms zIndex is truncated to an int, which can lead to incorrect/unstable ordering • lib/driver_app/trip/views/at_location_view.dart:45:11 • deprecated_member_use
+   info • 'zIndex' is deprecated and shouldn't be used. Use zIndexInt instead. On some platforms zIndex is truncated to an int, which can lead to incorrect/unstable ordering • lib/driver_app/trip/views/at_location_view.dart:55:11 • deprecated_member_use
+   info • The type name '_miniStat' isn't an UpperCamelCase identifier • lib/driver_app/trip/views/new_request_view.dart:639:7 • camel_case_types
+   info • Invalid use of a private type in a public API • lib/driver_app/trip/widgets/customer_rating_dialog.dart:24:3 • library_private_types_in_public_api
+   info • Empty catch block • lib/services/api_service.dart:144:17 • empty_catches
+   info • Don't invoke 'print' in production code • lib/services/routing_service.dart:55:7 • avoid_print
+   info • Empty catch block • lib/services/socket_service.dart:129:19 • empty_catches
+   info • Empty catch block • lib/services/socket_service.dart:140:19 • empty_catches
+   info • Empty catch block • lib/services/socket_service.dart:154:19 • empty_catches
+

@@ -1,0 +1,41 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'dart:async';
+
+import '../../routes/driver_routes.dart';
+import '../controllers/driver_trip_controller.dart';
+import '../controllers/driver_home_controller.dart';
+import '../../../services/api_service.dart';
+import '../../../services/socket_service.dart';
+
+class DriverTripController extends GetxController {
+  // ... (rest of the controller code, but focusing on navigation)
+  
+  // Existing methods ...
+
+  void goHomeTab() {
+    // Check if we were online before navigating home
+    bool wasOnline = false;
+    if (Get.isRegistered<DriverHomeController>()) {
+      wasOnline = Get.find<DriverHomeController>().isOnline.value;
+    }
+
+    Get.offAllNamed(DriverRoutes.home);
+    
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (Get.isRegistered<DriverHomeController>()) {
+        final hc = Get.find<DriverHomeController>();
+        hc.setIndex(0);
+        // Ensure status is preserved if the controller was re-initialized
+        if (wasOnline && !hc.isOnline.value) {
+          debugPrint("DriverTripController: Restoring online status after navigation.");
+          hc.toggleOnline(true);
+        }
+      }
+    });
+  }
+
+  // ... (rest of the controller)
+}

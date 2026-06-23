@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "515955598049",
+    "project_id": "drivit-9d759",
+    "storage_bucket": "drivit-9d759.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:515955598049:android:74444bc4eb9b0d60344da0",
+        "android_client_info": {
+          "package_name": "com.drivit.driver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAm5qbSUox9sCxpQk7-aEVxc0KU_-HFSKI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
