@@ -205,18 +205,29 @@ class NotificationService extends GetxService {
           return;
         }
 
-        // Deduplicate by rideId + type
+        // Deduplicate by rideId + type, or notification ID, or messageId
         final rideId = message.data['rideId'];
+        final notificationId = message.data['id'] ?? message.data['_id'];
+        final messageId = message.messageId;
+        
+        String? dedupKey;
         if (rideId != null && type != null) {
-          final key = "${rideId}_$type";
+          dedupKey = "${rideId}_$type";
+        } else if (notificationId != null) {
+          dedupKey = "notif_$notificationId";
+        } else if (messageId != null) {
+          dedupKey = "msg_$messageId";
+        }
+
+        if (dedupKey != null) {
           final now = DateTime.now();
-          if (_processedFcmKeys.containsKey(key)) {
-             if (now.difference(_processedFcmKeys[key]!).inSeconds < 15) {
-                debugPrint("🔔 [DRIVER] Duplicate FCM ignored: $key");
+          if (_processedFcmKeys.containsKey(dedupKey)) {
+             if (now.difference(_processedFcmKeys[dedupKey]!).inSeconds < 15) {
+                debugPrint("🔔 [DRIVER] Duplicate FCM ignored: $dedupKey");
                 return;
              }
           }
-          _processedFcmKeys[key] = now;
+          _processedFcmKeys[dedupKey] = now;
         }
         
         // ✅ NEW: Verify recipient to prevent cross-account leakage

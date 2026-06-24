@@ -154,7 +154,7 @@ class NotificationService extends GetxService {
           bool added = addNotification(
             title: notification.title ?? '',
             body: notification.body ?? '',
-            id: message.messageId,
+            id: message.data['id'] ?? message.data['_id'] ?? message.messageId,
             payload: message.data,
           );
           debugPrint("🔔 Notification added to state: $added");
