@@ -44,6 +44,12 @@ class MyRideDetailView extends StatelessWidget {
       }
       return "Distance/time based fare";
     }
+    if (item.status == RideStatus.upcoming || item.status == RideStatus.unassigned) {
+      if (item.tripType == 'Round Trip') {
+        return "Estimated fare based on ${item.hourlyPackageHours} hour package";
+      }
+      return "Estimated distance/time based fare";
+    }
     // cancelled
     switch (item.cancellationType) {
       case CancellationType.afterDriverArrival:
@@ -559,7 +565,7 @@ class MyRideDetailView extends StatelessWidget {
             ],
           ),
 
-          if (isCompleted) ...[
+          if (isCompleted || item.status == RideStatus.upcoming || item.status == RideStatus.unassigned) ...[
             const SizedBox(height: 14),
             const Divider(height: 1, color: _divider),
             const SizedBox(height: 12),
@@ -573,6 +579,9 @@ class MyRideDetailView extends StatelessWidget {
               _kv("Extra time used", "${item.extraTimeUsedMin} min"),
               _kv("Hourly rate", "₹ ${item.hourlyRate.toStringAsFixed(0)}/hour"),
               _kv("Hourly Package Cost", "₹ ${(item.hourlyPackageHours * item.hourlyRate).toStringAsFixed(0)}"),
+            ],
+            if (item.tripType != 'Round Trip') ...[
+              _kv("Distance cost", "₹ ${item.distanceCost.toStringAsFixed(0)}"),
             ],
             if (item.requireCarWash)
               _kv("Car wash service", "₹ ${item.carWashPrice.toStringAsFixed(0)}"),
@@ -590,6 +599,7 @@ class MyRideDetailView extends StatelessWidget {
           // Round Trip: hide trip duration; One Way: show duration & distance
           if (item.tripType != 'Round Trip') ...[
             _kv("Trip duration", item.tripDurationText),
+            _kv("Distance", item.distanceText),
           ],
         ],
       ),
