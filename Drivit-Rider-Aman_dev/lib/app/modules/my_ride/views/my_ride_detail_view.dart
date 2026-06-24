@@ -580,9 +580,7 @@ class MyRideDetailView extends StatelessWidget {
               _kv("Hourly rate", "₹ ${item.hourlyRate.toStringAsFixed(0)}/hour"),
               _kv("Hourly Package Cost", "₹ ${(item.hourlyPackageHours * item.hourlyRate).toStringAsFixed(0)}"),
             ],
-            if (item.tripType != 'Round Trip') ...[
-              _kv("Distance cost", "₹ ${item.distanceCost.toStringAsFixed(0)}"),
-            ],
+
             if (item.requireCarWash)
               _kv("Car wash service", "₹ ${item.carWashPrice.toStringAsFixed(0)}"),
             _kv("Platform charge", "₹ ${item.platformCharge.toStringAsFixed(0)}"),
@@ -596,10 +594,9 @@ class MyRideDetailView extends StatelessWidget {
           const Text("Trip Summary", style: TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
           _kv("Booking ID", item.bookingId),
-          // Round Trip: hide trip duration; One Way: show duration & distance
+          // Round Trip: hide trip duration; One Way: show duration
           if (item.tripType != 'Round Trip') ...[
             _kv("Trip duration", item.tripDurationText),
-            _kv("Distance", item.distanceText),
           ],
         ],
       ),

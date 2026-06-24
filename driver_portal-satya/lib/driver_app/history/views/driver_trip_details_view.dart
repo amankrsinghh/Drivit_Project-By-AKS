@@ -388,9 +388,7 @@ class _DriverTripDetailsViewState extends State<DriverTripDetailsView> {
                               _kv("Hourly rate", "₹ ${trip.hourlyRate}/hour"),
                               _kv("Extra time used", "${trip.extraTimeUsedMin} min"),
                             ],
-                            if (trip.tripType != 'Round Trip') ...[
-                              _kv("Distance Cost", "₹ ${trip.distanceCost}"),
-                            ],
+
                             if (trip.requireCarWash)
                               _kv("Car Wash Service", "₹ ${trip.carWashPrice}"),
                             const SizedBox(height: 12),
@@ -414,10 +412,9 @@ class _DriverTripDetailsViewState extends State<DriverTripDetailsView> {
                           ),
                           const SizedBox(height: 16),
                           _kv("Booking ID", trip.bookingId),
-                          // Round Trip: hide trip duration & distance; One Way: show both
+                          // Round Trip: hide trip duration; One Way: show duration
                           if (trip.tripType != 'Round Trip') ...[
                             _kv("Trip duration", isCanceled ? "-" : trip.actualDuration),
-                            _kv("Distance", trip.distance),
                           ],
                           
 
