@@ -43,8 +43,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     final prefs = await SharedPreferences.getInstance();
     final list = prefs.getStringList('stored_notifications') ?? [];
     
-    String title = (data['title'] ?? (data['type'] == 'new_ride' ? 'New Ride Request' : 'Notification')).toString();
-    String body = (data['body'] ?? '').toString();
+    final rawTitle = data['title']?.toString();
+    final rawBody = data['body']?.toString();
+    String title = (rawTitle == 'null' ? null : rawTitle) ?? (data['type'] == 'new_ride' ? 'New Ride Request' : 'Notification');
+    String body = (rawBody == 'null' ? null : rawBody) ?? '';
     
     final cleanTitle = title.trim();
     final cleanBody = body.trim();
@@ -307,8 +309,8 @@ class NotificationService extends GetxService {
           if (Get.isRegistered<DriverHomeController>()) {
             Get.find<DriverHomeController>().addNotification({
               'id': message.messageId ?? (message.data['rideId'] != null ? '${message.data['rideId']}_${message.data['type']}' : DateTime.now().millisecondsSinceEpoch.toString()),
-              'title': notification?.title ?? message.data['title'] ?? (message.data['type'] == 'new_ride' ? 'New Ride Request' : 'New Message'),
-              'body': notification?.body ?? message.data['body'] ?? '',
+              'title': notification?.title ?? (message.data['title'] == 'null' ? null : message.data['title']) ?? (message.data['type'] == 'new_ride' ? 'New Ride Request' : 'New Message'),
+              'body': notification?.body ?? (message.data['body'] == 'null' ? null : message.data['body']) ?? '',
               'type': message.data['type'],
               'data': message.data,
             });
@@ -535,8 +537,10 @@ class NotificationService extends GetxService {
       final prefs = await SharedPreferences.getInstance();
       final list = prefs.getStringList('stored_notifications') ?? [];
       
-      String title = (data['title'] ?? 'Notification').toString();
-      String body = (data['body'] ?? '').toString();
+      final rawTitle = data['title']?.toString();
+      final rawBody = data['body']?.toString();
+      String title = (rawTitle == 'null' ? null : rawTitle) ?? 'Notification';
+      String body = (rawBody == 'null' ? null : rawBody) ?? '';
       
       final cleanTitle = title.trim();
       final cleanBody = body.trim();
