@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/services/api_service.dart';
 import '../../../theme/app_colors.dart';
+import '../../my_ride/views/my_ride_detail_view.dart';
+import '../../my_ride/models/ride_items.dart';
 
 class NotificationView extends StatelessWidget {
   const NotificationView({super.key});
@@ -111,9 +113,20 @@ class NotificationView extends StatelessWidget {
               },
               child: InkWell(
                 onTap: () async {
-                  final payload = notification['payload'];
-                  if (payload != null && payload is Map) {
-                    final type = payload['type'];
+                  Map<String, dynamic> payload = Map<String, dynamic>.from(notification);
+                  if (notification['payload'] is Map) {
+                    payload = Map<String, dynamic>.from(notification['payload'] as Map);
+                  } else if (notification['data'] is Map) {
+                    payload = Map<String, dynamic>.from(notification['data'] as Map);
+                  }
+                  
+                  if (payload['payload'] is Map) {
+                    payload = Map<String, dynamic>.from(payload['payload'] as Map);
+                  } else if (payload['data'] is Map) {
+                    payload = Map<String, dynamic>.from(payload['data'] as Map);
+                  }
+
+                  final type = payload['type'];
                     if (type == 'chat_message') {
                       Get.toNamed('/chat', arguments: {
                         'rideId': payload['rideId'],
@@ -129,13 +142,12 @@ class NotificationView extends StatelessWidget {
                         Get.back();
                         if (!res.containsKey('error')) {
                           final rideData = res['data'] ?? res;
-                          Get.toNamed('/my_ride_detail', arguments: rideData);
+                          Get.to(() => MyRideDetailView(item: RideItem.fromApi(rideData)));
                         }
                       } catch (e) {
-                        Get.back();
+                        if (Get.isDialogOpen ?? false) Get.back();
                       }
                     }
-                  }
                 },
                 child: Container(
                   padding: const EdgeInsets.all(16),

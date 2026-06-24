@@ -476,8 +476,19 @@ class DriverHomeController extends GetxController {
       return;
     }
 
-    String title = (data['title'] ?? 'Notification').toString();
-    String body = (data['body'] ?? '').toString();
+    final String title = (data['title'] ?? 'Notification').toString();
+    final String body = (data['body'] ?? '').toString();
+    
+    final cleanTitle = title.trim();
+    final cleanBody = body.trim();
+    if (cleanTitle.isEmpty && cleanBody.isEmpty) {
+      debugPrint("DriverHomeController: Ignoring empty notification.");
+      return;
+    }
+    if ((cleanTitle == 'Notification' || cleanTitle == 'New Message') && cleanBody.isEmpty) {
+      debugPrint("DriverHomeController: Ignoring generic notification with empty body.");
+      return;
+    }
     
     // Canonical ID detection for Ride Requests
     String? rideId;

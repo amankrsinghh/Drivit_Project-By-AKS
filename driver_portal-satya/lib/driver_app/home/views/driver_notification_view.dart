@@ -116,9 +116,20 @@ class _DriverNotificationViewState extends State<DriverNotificationView> {
               },
               child: InkWell(
                 onTap: () async {
-                  final payload = notification['payload'];
-                  if (payload != null && payload is Map) {
-                    final type = payload['type'];
+                  Map<String, dynamic> payload = Map<String, dynamic>.from(notification);
+                  if (notification['payload'] is Map) {
+                    payload = Map<String, dynamic>.from(notification['payload'] as Map);
+                  } else if (notification['data'] is Map) {
+                    payload = Map<String, dynamic>.from(notification['data'] as Map);
+                  }
+                  
+                  if (payload['payload'] is Map) {
+                    payload = Map<String, dynamic>.from(payload['payload'] as Map);
+                  } else if (payload['data'] is Map) {
+                    payload = Map<String, dynamic>.from(payload['data'] as Map);
+                  }
+
+                  final type = payload['type'];
                     if (type == 'chat_message') {
                       Get.toNamed('/chat', arguments: {
                         'rideId': payload['rideId'],
@@ -178,7 +189,6 @@ class _DriverNotificationViewState extends State<DriverNotificationView> {
                         if (Get.isDialogOpen ?? false) Get.back();
                       }
                     }
-                  }
                 },
                 child: Container(
                   padding: const EdgeInsets.all(14),

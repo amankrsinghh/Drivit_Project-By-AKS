@@ -46,6 +46,17 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     String title = (data['title'] ?? (data['type'] == 'new_ride' ? 'New Ride Request' : 'Notification')).toString();
     String body = (data['body'] ?? '').toString();
     
+    final cleanTitle = title.trim();
+    final cleanBody = body.trim();
+    if (cleanTitle.isEmpty && cleanBody.isEmpty) {
+      debugPrint("Background FCM: Ignoring empty notification.");
+      return;
+    }
+    if ((cleanTitle == 'Notification' || cleanTitle == 'New Message') && cleanBody.isEmpty) {
+      debugPrint("Background FCM: Ignoring generic notification with empty body.");
+      return;
+    }
+    
     String? rideId = data['rideId']?.toString();
     String id = (data['_id'] ?? data['id'] ?? data['messageId'] ?? '').toString();
     if (title == 'New Ride Request' && rideId != null && rideId.isNotEmpty) {
@@ -515,6 +526,17 @@ class NotificationService extends GetxService {
       
       String title = (data['title'] ?? 'Notification').toString();
       String body = (data['body'] ?? '').toString();
+      
+      final cleanTitle = title.trim();
+      final cleanBody = body.trim();
+      if (cleanTitle.isEmpty && cleanBody.isEmpty) {
+        debugPrint("NotificationService: Ignoring empty notification.");
+        return;
+      }
+      if ((cleanTitle == 'Notification' || cleanTitle == 'New Message') && cleanBody.isEmpty) {
+        debugPrint("NotificationService: Ignoring generic notification with empty body.");
+        return;
+      }
       
       String? rideId;
       if (data['rideId'] != null) {

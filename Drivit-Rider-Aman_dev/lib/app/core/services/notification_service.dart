@@ -372,6 +372,15 @@ class NotificationService extends GetxService {
   }
 
   bool addNotification({required String title, required String body, String? id, Map<String, dynamic>? payload}) {
+    final cleanTitle = title.trim();
+    final cleanBody = body.trim();
+    if (cleanTitle.isEmpty && cleanBody.isEmpty) {
+      return false;
+    }
+    if ((cleanTitle == 'Notification' || cleanTitle == 'New Message') && cleanBody.isEmpty) {
+      return false;
+    }
+    
     final finalId = id ?? "${title}_${body}".hashCode.toString();
 
     // 1. Skip if ID is in deleted tombstones
