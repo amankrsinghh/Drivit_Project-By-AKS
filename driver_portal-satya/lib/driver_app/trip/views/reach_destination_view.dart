@@ -368,6 +368,31 @@ class _DriverReachDestinationViewState extends State<DriverReachDestinationView>
                   ),
                 ),
               ),
+            if (controller.isCancelling.value)
+              Container(
+                color: Colors.black.withValues(alpha: 0.5),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10)],
+                    ),
+                    child: const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(color: DriverColors.primary),
+                        SizedBox(height: 16),
+                        Text(
+                          "Cancelling Ride...",
+                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
           ],
         )),
       ),

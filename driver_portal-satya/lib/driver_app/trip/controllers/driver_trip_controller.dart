@@ -105,12 +105,14 @@ class DriverTripController extends GetxController {
   final otpC = TextEditingController();
   final otpFocusNode = FocusNode();
   final isUpdating = false.obs;
+  final isCancelling = false.obs;
 
   final isVerifyingOtp = false.obs;
   final isStartingTrip = false.obs; // true from Start Trip tap → OTP dialog shown
   final isCompletingRide = false.obs;
   final isPaymentCollected = false.obs;
   final isFeedbackShown = false.obs;
+  bool _isNavigatingHome = false;
   
   StreamSubscription<Position>? _positionStream;
   DateTime? _lastRouteFetchTime;
@@ -285,6 +287,7 @@ class DriverTripController extends GetxController {
     isPaymentCollected.value = false;
     isUpdating.value = false;
     isFeedbackShown.value = false;
+    _isNavigatingHome = false;
 
     currentRideId.value = ride['_id']?.toString() ?? '';
     status.value = ride['status']?.toString() ?? '';
@@ -436,6 +439,9 @@ class DriverTripController extends GetxController {
   void _listenToRiderLocation() {
     try {
       final socketService = Get.find<SocketService>();
+      if (_riderLocationHandler != null && socketService.socket != null) {
+        socketService.socket!.off('ride:location_update', _riderLocationHandler);
+      }
       _riderLocationHandler = (data) {
         if (isClosed) return;
         if (data != null && data['rideId'].toString() == currentRideId.value) {
@@ -464,6 +470,13 @@ class DriverTripController extends GetxController {
       final socketService = Get.find<SocketService>();
       socketService.joinRide(currentRideId.value);
       
+      if (_statusChangedHandler != null && socketService.socket != null) {
+        socketService.socket!.off('ride:status_changed', _statusChangedHandler);
+      }
+      if (_paymentMethodChangedHandler != null && socketService.socket != null) {
+        socketService.socket!.off('ride:payment_method_changed', _paymentMethodChangedHandler);
+      }
+
       _statusChangedHandler = (data) {
         if (isClosed) return;
         if (data != null && data['_id'].toString() == currentRideId.value) {
@@ -834,6 +847,9 @@ class DriverTripController extends GetxController {
   }
 
   void goHomeTab() {
+    if (_isNavigatingHome) return;
+    _isNavigatingHome = true;
+
     if (Get.isDialogOpen == true) {
       Get.back();
     }
@@ -1038,13 +1054,20 @@ class DriverTripController extends GetxController {
 
   Future<void> cancelRideByDriver() async {
     if (currentRideId.value.isNotEmpty) {
-      await ApiService.addCancelledRideId(currentRideId.value);
-      await _updateRideStatus('cancelled_by_driver');
-      // Notify SocketService trip is over before navigating home
-      if (Get.isRegistered<SocketService>()) {
-        Get.find<SocketService>().clearActiveTrip();
+      isCancelling.value = true;
+      try {
+        await ApiService.addCancelledRideId(currentRideId.value);
+        await _updateRideStatus('cancelled_by_driver');
+        // Notify SocketService trip is over before navigating home
+        if (Get.isRegistered<SocketService>()) {
+          Get.find<SocketService>().clearActiveTrip();
+        }
+        goHomeTab();
+      } catch (e) {
+        Get.snackbar("Error", "Failed to cancel ride: $e");
+      } finally {
+        isCancelling.value = false;
       }
-      goHomeTab();
     }
   }
 
