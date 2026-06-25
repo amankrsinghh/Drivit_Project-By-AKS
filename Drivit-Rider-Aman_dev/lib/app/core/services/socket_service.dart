@@ -22,7 +22,7 @@ class SocketService extends GetxService {
   static SocketService get to => Get.find();
 
   static const String socketUrl =
-      'https://driveit-app-backend-production.up.railway.app';
+      'https://backend-production-e76e.up.railway.app';
 
   @override
   void onInit() {

@@ -15,7 +15,7 @@ import '../driver_app/home/controllers/driver_home_controller.dart';
 class ApiService {
   // Live Railway URL for both Android and iOS
   static String get baseUrl {
-    return 'https://driveit-app-backend-production.up.railway.app/api';
+    return 'https://backend-production-e76e.up.railway.app/api';
   }
 
   static String? googleMapsApiKey;

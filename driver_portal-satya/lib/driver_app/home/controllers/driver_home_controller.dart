@@ -13,7 +13,6 @@ import '../../../services/api_service.dart';
 import '../../../services/notification_service.dart';
 import '../../../app/core/utils/geofence_util.dart';
 
-
 class DriverHomeController extends GetxController {
   final index = 0.obs; // 0 Home, 1 Package, 2 Finding, 3 History, 4 Profile
   final isOnline = (ApiService.initialOnlineStatus).obs;
@@ -37,20 +36,20 @@ class DriverHomeController extends GetxController {
   final deletedNotificationIds = <String>[].obs;
 
   final isWalletActive = false.obs;
-  
+
   // Real-time location
   final driverLat = 0.0.obs;
   final driverLng = 0.0.obs;
   final displayDriverLat = 0.0.obs;
   final displayDriverLng = 0.0.obs;
   final lastPosition = Rxn<LatLng>();
-  
+
   final totalRides = 0.obs;
-  
+
   // Active Ride status tracking
   final activeTrip = Rxn<Map<String, dynamic>>();
   Timer? _activeTripTimer;
-  
+
   Timer? _lerpTimer;
   StreamSubscription<Position>? _positionStream;
 
@@ -82,7 +81,7 @@ class DriverHomeController extends GetxController {
   Future<void> _loadStoredNotifications() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // Load active notifications
       final list = prefs.getStringList('stored_notifications') ?? [];
       final parsed = <Map<String, dynamic>>[];
@@ -93,11 +92,13 @@ class DriverHomeController extends GetxController {
             parsed.add(Map<String, dynamic>.from(decoded));
           }
         } catch (itemErr) {
-          debugPrint("DriverHomeController: Skipping corrupted stored notification: $itemErr");
+          debugPrint(
+            "DriverHomeController: Skipping corrupted stored notification: $itemErr",
+          );
         }
       }
       notifications.assignAll(parsed);
-      
+
       // Load unread count
       final unread = prefs.getInt('unread_notifications_count') ?? 0;
       unreadNotificationsCount.value = unread;
@@ -115,20 +116,25 @@ class DriverHomeController extends GetxController {
   Future<void> _saveNotifications() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // Save active notifications
       final list = <String>[];
       for (final n in notifications) {
         try {
           list.add(jsonEncode(n));
         } catch (encodeErr) {
-          debugPrint("DriverHomeController: Skipping non-serializable notification payload: $encodeErr");
+          debugPrint(
+            "DriverHomeController: Skipping non-serializable notification payload: $encodeErr",
+          );
         }
       }
       await prefs.setStringList('stored_notifications', list);
-      
+
       // Save unread count
-      await prefs.setInt('unread_notifications_count', unreadNotificationsCount.value);
+      await prefs.setInt(
+        'unread_notifications_count',
+        unreadNotificationsCount.value,
+      );
 
       // ✅ Tombstones are session-only — not persisted to disk
       // This prevents permanently blocking new notifications with same IDs in new sessions.
@@ -159,7 +165,7 @@ class DriverHomeController extends GetxController {
       displayDriverLat.value = pos.latitude;
       displayDriverLng.value = pos.longitude;
       lastPosition.value = LatLng(pos.latitude, pos.longitude);
-      
+
       _startTracking();
     } catch (e) {
       debugPrint("Error initializing location: $e");
@@ -168,35 +174,44 @@ class DriverHomeController extends GetxController {
 
   void _startTracking() {
     _positionStream?.cancel();
-    _positionStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-      ),
-    ).listen((Position pos) {
-      if (isClosed) return;
-      
-      _animateTo(pos.latitude, pos.longitude);
-      
-      driverLat.value = pos.latitude;
-      driverLng.value = pos.longitude;
-      lastPosition.value = LatLng(pos.latitude, pos.longitude);
-      // ✅ Real-time Geofence Enforcement: Force offline if driver leaves Chennai (bypass on active trips)
-      if (isOnline.value) {
-        final bool geofenceEnabled = ApiService.enableGeofenceBoundary;
-        if (geofenceEnabled && !GeofenceUtil.isInsideChennai(pos.latitude, pos.longitude)) {
-          final trip = activeTrip.value;
-          final bool hasActiveTrip = trip != null && 
-              ['Accepted', 'Arrived', 'Ongoing'].contains(trip['status']);
-          if (!hasActiveTrip) {
-            debugPrint("Geofence: Driver moved out of Chennai boundary. Forcing offline.");
-            forceOffline("You have moved outside the Chennai service area. You have been taken offline.");
-          } else {
-            debugPrint("Geofence: Driver is outside Chennai boundary but on active trip. Bypassing offline.");
+    _positionStream =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 10,
+          ),
+        ).listen((Position pos) {
+          if (isClosed) return;
+
+          _animateTo(pos.latitude, pos.longitude);
+
+          driverLat.value = pos.latitude;
+          driverLng.value = pos.longitude;
+          lastPosition.value = LatLng(pos.latitude, pos.longitude);
+          // ✅ Real-time Geofence Enforcement: Force offline if driver leaves Chennai (bypass on active trips)
+          if (isOnline.value) {
+            final bool geofenceEnabled = ApiService.enableGeofenceBoundary;
+            if (geofenceEnabled &&
+                !GeofenceUtil.isInsideChennai(pos.latitude, pos.longitude)) {
+              final trip = activeTrip.value;
+              final bool hasActiveTrip =
+                  trip != null &&
+                  ['Accepted', 'Arrived', 'Ongoing'].contains(trip['status']);
+              if (!hasActiveTrip) {
+                debugPrint(
+                  "Geofence: Driver moved out of Chennai boundary. Forcing offline.",
+                );
+                forceOffline(
+                  "You have moved outside the Chennai service area. You have been taken offline.",
+                );
+              } else {
+                debugPrint(
+                  "Geofence: Driver is outside Chennai boundary but on active trip. Bypassing offline.",
+                );
+              }
+            }
           }
-        }
-      }
-    });
+        });
   }
 
   void _animateTo(double targetLat, double targetLng) {
@@ -254,13 +269,18 @@ class DriverHomeController extends GetxController {
 
       final status = ride['status']?.toString() ?? '';
       final pStatus = ride['paymentStatus']?.toString() ?? '';
-      
+
       // ✅ RESUME FOR ACTIVE STATES OR PENDING PAYMENT COMPLETED RIDES
-      bool isResumable = ['Accepted', 'Arrived', 'Ongoing'].contains(status) ||
-                         (status == 'Completed' && pStatus == 'Pending') ||
-                         (status == 'Cancelled' && pStatus == 'Pending' && (ride['fare'] ?? 0) > 0);
+      bool isResumable =
+          ['Accepted', 'Arrived', 'Ongoing'].contains(status) ||
+          (status == 'Completed' && pStatus == 'Pending') ||
+          (status == 'Cancelled' &&
+              pStatus == 'Pending' &&
+              (ride['fare'] ?? 0) > 0);
       if (!isResumable) {
-        debugPrint("DriverHome: Found ride but status is $status (paymentStatus: $pStatus). Not resuming.");
+        debugPrint(
+          "DriverHome: Found ride but status is $status (paymentStatus: $pStatus). Not resuming.",
+        );
         if (!_initialized) {
           await _restoreOrResetOnlineStatus();
           _initialized = true;
@@ -271,7 +291,9 @@ class DriverHomeController extends GetxController {
       // ✅ CHECK IF MANUALLY CANCELLED LOCALLY (Stays in local storage)
       final cancelledIds = await ApiService.getCancelledRideIds();
       if (cancelledIds.contains(rideId)) {
-        debugPrint("DriverHome: Active ride found but was locally cancelled/rejected ($rideId). Skipping.");
+        debugPrint(
+          "DriverHome: Active ride found but was locally cancelled/rejected ($rideId). Skipping.",
+        );
         if (!_initialized) {
           await _restoreOrResetOnlineStatus();
           _initialized = true;
@@ -282,7 +304,7 @@ class DriverHomeController extends GetxController {
       // ✅ Driver has an active trip! Keep/set them online.
       isOnline.value = true;
       await ApiService.saveOnlineStatus(true);
-      
+
       // Sync online state to backend and sockets
       try {
         await ApiService.toggleOnline(
@@ -308,10 +330,7 @@ class DriverHomeController extends GetxController {
       final statusLower = status.toLowerCase();
       if (statusLower == 'completed' || statusLower == 'cancelled') {
         debugPrint("DriverHome: Resuming Earning view for ride $rideId");
-        Get.toNamed(
-          DriverRoutes.tripEarning,
-          parameters: {'rideId': rideId},
-        );
+        Get.toNamed(DriverRoutes.tripEarning, parameters: {'rideId': rideId});
       } else if (statusLower == 'ongoing' || statusLower == 'tripstarted') {
         debugPrint("DriverHome: Resuming Ongoing trip $rideId");
         Get.toNamed(
@@ -320,10 +339,7 @@ class DriverHomeController extends GetxController {
         );
       } else if (statusLower == 'arrived') {
         debugPrint("DriverHome: Resuming Arrived (Quick Check) trip $rideId");
-        Get.toNamed(
-          DriverRoutes.quickCheck,
-          parameters: {'rideId': rideId},
-        );
+        Get.toNamed(DriverRoutes.quickCheck, parameters: {'rideId': rideId});
       } else {
         // Accepted
         debugPrint("DriverHome: Resuming Accepted trip $rideId");
@@ -358,10 +374,13 @@ class DriverHomeController extends GetxController {
         final status = ride['status']?.toString() ?? '';
         final pStatus = ride['paymentStatus']?.toString() ?? '';
         final cancelledIds = await ApiService.getCancelledRideIds();
-        
-        bool isResumable = ['Accepted', 'Arrived', 'Ongoing'].contains(status) || 
-                           (status == 'Completed' && pStatus == 'Pending') ||
-                           (status == 'Cancelled' && pStatus == 'Pending' && (ride['fare'] ?? 0) > 0);
+
+        bool isResumable =
+            ['Accepted', 'Arrived', 'Ongoing'].contains(status) ||
+            (status == 'Completed' && pStatus == 'Pending') ||
+            (status == 'Cancelled' &&
+                pStatus == 'Pending' &&
+                (ride['fare'] ?? 0) > 0);
 
         if (isResumable && !cancelledIds.contains(rideId)) {
           activeTrip.value = ride;
@@ -378,25 +397,19 @@ class DriverHomeController extends GetxController {
   void resumeActiveTrip() {
     final ride = activeTrip.value;
     if (ride == null) return;
-    
+
     final rideId = ride['_id']?.toString() ?? '';
     final status = (ride['status']?.toString() ?? '').toLowerCase();
-    
+
     if (status == 'completed' || status == 'cancelled') {
-      Get.toNamed(
-        DriverRoutes.tripEarning,
-        parameters: {'rideId': rideId},
-      );
+      Get.toNamed(DriverRoutes.tripEarning, parameters: {'rideId': rideId});
     } else if (status == 'ongoing' || status == 'tripstarted') {
       Get.toNamed(
         DriverRoutes.reachDestination,
         parameters: {'rideId': rideId},
       );
     } else if (status == 'arrived') {
-      Get.toNamed(
-        DriverRoutes.quickCheck,
-        parameters: {'rideId': rideId},
-      );
+      Get.toNamed(DriverRoutes.quickCheck, parameters: {'rideId': rideId});
     } else {
       Get.toNamed(
         DriverRoutes.afterAcceptLocation,
@@ -405,32 +418,50 @@ class DriverHomeController extends GetxController {
     }
   }
 
-
   Future<void> _resetToOffline() async {
+    debugPrint("[SOCKET DEBUG] DriverHomeController._resetToOffline() called");
     isOnline.value = false;
     await ApiService.saveOnlineStatus(false);
-    
+
     // Sync with backend to be sure
+    debugPrint(
+      "[SOCKET DEBUG] DriverHomeController._resetToOffline: syncing offline to backend",
+    );
     await ApiService.toggleOnline(false);
 
     if (Get.isRegistered<SocketService>()) {
       final socket = Get.find<SocketService>();
+      debugPrint(
+        "[SOCKET DEBUG] DriverHomeController._resetToOffline: calling socket.goOffline()",
+      );
       socket.goOffline();
       socket.setFindingStatus(false);
       socket.clearActiveTrip();
+    } else {
+      debugPrint(
+        "[SOCKET DEBUG] DriverHomeController._resetToOffline: SocketService not registered!",
+      );
     }
   }
 
   Future<void> _restoreOrResetOnlineStatus() async {
+    debugPrint(
+      "[SOCKET DEBUG] DriverHomeController._restoreOrResetOnlineStatus() called",
+    );
     try {
       final bool wasOnline = await ApiService.getOnlineStatus();
+      debugPrint(
+        "[SOCKET DEBUG] DriverHomeController._restoreOrResetOnlineStatus: wasOnline local preference is $wasOnline",
+      );
       if (wasOnline) {
-        debugPrint("DriverHome: Stored status was online. Restoring online status on launch.");
-        
+        debugPrint(
+          "DriverHome: Stored status was online. Restoring online status on launch.",
+        );
+
         // Retrieve location silently
         double? lat = driverLat.value != 0.0 ? driverLat.value : null;
         double? lng = driverLng.value != 0.0 ? driverLng.value : null;
-        
+
         if (lat == null || lng == null) {
           try {
             final lastPos = await Geolocator.getLastKnownPosition();
@@ -439,10 +470,13 @@ class DriverHomeController extends GetxController {
               lng = lastPos.longitude;
               driverLat.value = lat;
               driverLng.value = lng;
+              debugPrint(
+                "[SOCKET DEBUG] _restoreOrResetOnlineStatus: retrieved last known location: $lat, $lng",
+              );
             }
           } catch (_) {}
         }
-        
+
         if (lat == null || lng == null) {
           try {
             final currentPos = await Geolocator.getCurrentPosition(
@@ -455,13 +489,21 @@ class DriverHomeController extends GetxController {
             lng = currentPos.longitude;
             driverLat.value = lat;
             driverLng.value = lng;
+            debugPrint(
+              "[SOCKET DEBUG] _restoreOrResetOnlineStatus: retrieved current location: $lat, $lng",
+            );
           } catch (_) {}
         }
 
         // Geofence check on launch
         final bool geofenceEnabled = ApiService.enableGeofenceBoundary;
-        if (geofenceEnabled && lat != null && lng != null && !GeofenceUtil.isInsideChennai(lat, lng)) {
-          debugPrint("DriverHome: Driver is outside Chennai boundary. Resetting to offline.");
+        if (geofenceEnabled &&
+            lat != null &&
+            lng != null &&
+            !GeofenceUtil.isInsideChennai(lat, lng)) {
+          debugPrint(
+            "DriverHome: Driver is outside Chennai boundary. Resetting to offline.",
+          );
           await _resetToOffline();
           Get.snackbar(
             "Access Denied",
@@ -475,30 +517,52 @@ class DriverHomeController extends GetxController {
 
         // Set online status in controller
         isOnline.value = true;
-        
+
         // Sync with backend
         try {
-          await ApiService.toggleOnline(true, lat: lat, lng: lng);
-        } catch (_) {}
+          debugPrint(
+            "[SOCKET DEBUG] _restoreOrResetOnlineStatus: syncing online=true to backend REST API",
+          );
+          final res = await ApiService.toggleOnline(true, lat: lat, lng: lng);
+          debugPrint(
+            "[SOCKET DEBUG] _restoreOrResetOnlineStatus: backend REST response: $res",
+          );
+        } catch (e) {
+          debugPrint(
+            "[SOCKET DEBUG] _restoreOrResetOnlineStatus: backend REST exception: $e",
+          );
+        }
 
         // Sync with socket
         if (Get.isRegistered<SocketService>()) {
           final socket = Get.find<SocketService>();
+          debugPrint(
+            "[SOCKET DEBUG] _restoreOrResetOnlineStatus: calling socket.goOnline()",
+          );
           socket.goOnline();
           socket.setFindingStatus(true);
+        } else {
+          debugPrint(
+            "[SOCKET DEBUG] _restoreOrResetOnlineStatus: SocketService not registered!",
+          );
         }
       } else {
+        debugPrint(
+          "[SOCKET DEBUG] _restoreOrResetOnlineStatus: wasOnline is false, resetting to offline",
+        );
         await _resetToOffline();
       }
     } catch (e) {
-      debugPrint("Error restoring online status: $e");
+      debugPrint("[SOCKET DEBUG] Error restoring online status: $e");
       await _resetToOffline();
     }
   }
 
   /// ✅ Force driver offline when subscription expires or geofencing triggers
   Future<void> forceOffline(String message) async {
-    debugPrint("DriverHomeController: ⚠️ Force offline — $message");
+    debugPrint(
+      "[SOCKET DEBUG] DriverHomeController: ⚠️ Force offline — $message",
+    );
 
     // 1. Instant UI update
     isOnline.value = false;
@@ -508,14 +572,22 @@ class DriverHomeController extends GetxController {
 
     // 3. Sync with backend (safety)
     try {
+      debugPrint(
+        "[SOCKET DEBUG] forceOffline: syncing offline to backend REST API",
+      );
       await ApiService.toggleOnline(false);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint("[SOCKET DEBUG] forceOffline backend REST sync exception: $e");
+    }
 
     // 4. Disconnect socket from online/finding rooms
     if (Get.isRegistered<SocketService>()) {
       final socket = Get.find<SocketService>();
+      debugPrint("[SOCKET DEBUG] forceOffline: calling socket.goOffline()");
       socket.goOffline();
       socket.setFindingStatus(false);
+    } else {
+      debugPrint("[SOCKET DEBUG] forceOffline: SocketService not registered!");
     }
 
     // 5. Stop finding controller if active
@@ -542,47 +614,58 @@ class DriverHomeController extends GetxController {
     setIndex(1);
   }
 
-
   void addNotification(Map<String, dynamic> data) {
     // Extract type
     String? type;
     if (data['type'] != null) {
       type = data['type'].toString();
-    } else if (data['data'] != null && data['data'] is Map && data['data']['type'] != null) {
+    } else if (data['data'] != null &&
+        data['data'] is Map &&
+        data['data']['type'] != null) {
       type = data['data']['type'].toString();
-    } else if (data['payload'] != null && data['payload'] is Map && data['payload']['type'] != null) {
+    } else if (data['payload'] != null &&
+        data['payload'] is Map &&
+        data['payload']['type'] != null) {
       type = data['payload']['type'].toString();
     }
 
     if (type == 'ride_cancelled' || type == 'ride_accepted') {
-      debugPrint("AddNotification: Skipping cancellation/acceptance notification ($type) from list.");
+      debugPrint(
+        "AddNotification: Skipping cancellation/acceptance notification ($type) from list.",
+      );
       return;
     }
 
     final String title = (data['title'] ?? 'Notification').toString();
     final String body = (data['body'] ?? '').toString();
-    
+
     final cleanTitle = title.trim();
     final cleanBody = body.trim();
     if (cleanTitle.isEmpty && cleanBody.isEmpty) {
       debugPrint("DriverHomeController: Ignoring empty notification.");
       return;
     }
-    if ((cleanTitle == 'Notification' || cleanTitle == 'New Message') && cleanBody.isEmpty) {
-      debugPrint("DriverHomeController: Ignoring generic notification with empty body.");
+    if ((cleanTitle == 'Notification' || cleanTitle == 'New Message') &&
+        cleanBody.isEmpty) {
+      debugPrint(
+        "DriverHomeController: Ignoring generic notification with empty body.",
+      );
       return;
     }
-    
+
     // Canonical ID detection for Ride Requests
     String? rideId;
     if (data['rideId'] != null) {
       rideId = data['rideId'].toString();
-    } else if (data['data'] != null && data['data'] is Map && data['data']['rideId'] != null) {
+    } else if (data['data'] != null &&
+        data['data'] is Map &&
+        data['data']['rideId'] != null) {
       rideId = data['data']['rideId'].toString();
     }
 
-    String id = (data['_id'] ?? data['id'] ?? data['messageId'] ?? '').toString();
-    
+    String id = (data['_id'] ?? data['id'] ?? data['messageId'] ?? '')
+        .toString();
+
     // If it's a ride request, force a consistent ID based on rideId
     if (title == 'New Ride Request' && rideId != null && rideId.isNotEmpty) {
       id = 'request_$rideId';
@@ -603,7 +686,9 @@ class DriverHomeController extends GetxController {
     // This ensures that if we get a new update for the same request, we only keep one.
     int existingIndex = notifications.indexWhere((n) => n['id'] == id);
     if (existingIndex != -1) {
-      debugPrint("AddNotification: Duplicate ride request $id found. Removing old one.");
+      debugPrint(
+        "AddNotification: Duplicate ride request $id found. Removing old one.",
+      );
       notifications.removeAt(existingIndex);
     }
 
@@ -626,11 +711,11 @@ class DriverHomeController extends GetxController {
         deletedNotificationIds.add(id);
       }
     }
-    
+
     notifications.clear();
     unreadNotificationsCount.value = 0;
     _saveNotifications();
-    
+
     // Clear system tray
     if (Get.isRegistered<NotificationService>()) {
       NotificationService.to.cancelAll();
@@ -666,7 +751,8 @@ class DriverHomeController extends GetxController {
       final profile = await ApiService.getDriverProfile();
       if (profile != null && !profile.containsKey('error')) {
         walletBalance.value = (profile['walletBalance'] ?? 0.0).toDouble();
-        incentiveBalance.value = (profile['incentiveBalance'] ?? 0.0).toDouble();
+        incentiveBalance.value = (profile['incentiveBalance'] ?? 0.0)
+            .toDouble();
         isWalletActive.value = profile['isWalletActive'] ?? false;
         totalRides.value = profile['totalRides'] ?? 0;
 
@@ -701,16 +787,19 @@ class DriverHomeController extends GetxController {
       final displayRides = rides
           .where((r) => r['status'] != 'Cancelled' && r['status'] != 'Pending')
           .toList();
-      recentRides.assignAll(displayRides.take(5).toList()); 
-
+      recentRides.assignAll(displayRides.take(5).toList());
     } catch (e) {
       print("Error fetching home stats: $e");
     } finally {
       isLoadingStats.value = false;
 
       // ✅ AUTO-DETECT: If wallet became inactive while driver is online, force offline (only if not on free rides)
-      if (isOnline.value && !isWalletActive.value && totalRides.value >= ApiService.freeRidesCount) {
-        debugPrint("DriverHomeController: Wallet inactive but driver is online — forcing offline (package likely expired)");
+      if (isOnline.value &&
+          !isWalletActive.value &&
+          totalRides.value >= ApiService.freeRidesCount) {
+        debugPrint(
+          "DriverHomeController: Wallet inactive but driver is online — forcing offline (package likely expired)",
+        );
         forceOfflineDueToExpiry();
       }
     }
@@ -744,7 +833,9 @@ class DriverHomeController extends GetxController {
         );
         try {
           Position p = await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+            ),
           );
           lat = p.latitude;
           lng = p.longitude;
@@ -763,7 +854,9 @@ class DriverHomeController extends GetxController {
         Get.dialog(
           AlertDialog(
             title: const Text("Access Denied"),
-            content: const Text("You are out of Chennai boundary area. You can only go online within Chennai city limits."),
+            content: const Text(
+              "You are out of Chennai boundary area. You can only go online within Chennai city limits.",
+            ),
             actions: [
               TextButton(
                 onPressed: () => Get.back(),
@@ -779,14 +872,26 @@ class DriverHomeController extends GetxController {
     // ✅ INSTANT UI UPDATE
     final oldStatus = isOnline.value;
     isOnline.value = v;
+    debugPrint(
+      "[SOCKET DEBUG] DriverHomeController.toggleOnline: changing UI status from $oldStatus to $v",
+    );
 
     try {
+      debugPrint(
+        "[SOCKET DEBUG] DriverHomeController.toggleOnline: calling ApiService.toggleOnline(isOnline: $v, lat: $lat, lng: $lng)",
+      );
       final res = await ApiService.toggleOnline(v, lat: lat, lng: lng);
-      
+      debugPrint(
+        "[SOCKET DEBUG] DriverHomeController.toggleOnline API response: $res",
+      );
+
       if (res.containsKey('error')) {
         // Revert UI if backend error
         isOnline.value = oldStatus;
-        
+        debugPrint(
+          "[SOCKET DEBUG] DriverHomeController.toggleOnline failed (contains error keys). Reverted UI status to $oldStatus",
+        );
+
         Get.snackbar(
           "Access Denied",
           res['error'] ?? "You are out of chennai boundary area.",
@@ -796,23 +901,38 @@ class DriverHomeController extends GetxController {
         );
 
         if (v == true && !res.containsKey('outOfBoundary')) {
-          setIndex(1); // Navigate to Package tab automatically (only if not a boundary error)
+          setIndex(
+            1,
+          ); // Navigate to Package tab automatically (only if not a boundary error)
         }
         return;
       }
 
+      debugPrint(
+        "[SOCKET DEBUG] DriverHomeController.toggleOnline successfully updated backend. Saving status locally: $v",
+      );
       await ApiService.saveOnlineStatus(v);
-      
+
       // Real-time Online/Offline
       if (Get.isRegistered<SocketService>()) {
         final socket = Get.find<SocketService>();
         if (v) {
+          debugPrint(
+            "[SOCKET DEBUG] DriverHomeController.toggleOnline calling socket.goOnline()",
+          );
           socket.goOnline();
           socket.setFindingStatus(true);
         } else {
+          debugPrint(
+            "[SOCKET DEBUG] DriverHomeController.toggleOnline calling socket.goOffline()",
+          );
           socket.goOffline();
           socket.setFindingStatus(false);
         }
+      } else {
+        debugPrint(
+          "[SOCKET DEBUG] SocketService is not registered when toggling online status!",
+        );
       }
 
       if (!v && Get.isRegistered<DriverFindingController>()) {
@@ -821,7 +941,9 @@ class DriverHomeController extends GetxController {
     } catch (e) {
       // Revert UI on error
       isOnline.value = oldStatus;
-      debugPrint("Error toggling online: $e");
+      debugPrint(
+        "[SOCKET DEBUG] Exception toggling online status: $e. Reverted UI status to $oldStatus",
+      );
     }
   }
 

@@ -31,7 +31,7 @@ class SocketService extends GetxService {
   bool isInActiveTrip = false;
 
   static const String socketUrl =
-      'https://driveit-app-backend-production.up.railway.app';
+      'https://backend-production-e76e.up.railway.app';
 
   @override
   void onInit() {
@@ -398,6 +398,7 @@ class SocketService extends GetxService {
 
   void goOnline() async {
     final driverId = await ApiService.getDriverId();
+    debugPrint("[SOCKET DEBUG] SocketService.goOnline() called. driverId: $driverId, socket connected: ${socket?.connected}");
     if (driverId != null) {
       socket?.emit('driver:online', driverId);
       _startLocationUpdates();
@@ -407,6 +408,7 @@ class SocketService extends GetxService {
 
   void goOffline() async {
     final driverId = await ApiService.getDriverId();
+    debugPrint("[SOCKET DEBUG] SocketService.goOffline() called. driverId: $driverId, socket connected: ${socket?.connected}");
     if (driverId != null) {
       socket?.emit('driver:offline', driverId);
       _stopLocationUpdates();

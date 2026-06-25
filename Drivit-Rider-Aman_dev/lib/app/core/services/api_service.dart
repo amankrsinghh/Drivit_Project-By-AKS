@@ -14,7 +14,7 @@ import 'socket_service.dart';
 
 class ApiService {
   static const String baseUrl =
-      'https://driveit-app-backend-production.up.railway.app/api';
+      'https://backend-production-e76e.up.railway.app/api';
 
   static String? googleMapsApiKey;
   static Map<String, dynamic>? cachedProfile;
@@ -22,7 +22,7 @@ class ApiService {
   static String getImageUrl(String? path) {
     if (path == null || path.isEmpty) return "";
     if (path.startsWith('http')) return path;
-    const serverUrl = 'https://driveit-app-backend-production.up.railway.app';
+    const serverUrl = 'https://backend-production-e76e.up.railway.app';
     final cleanPath = path.startsWith('/') ? path.substring(1) : path;
     return '$serverUrl/$cleanPath';
   }
