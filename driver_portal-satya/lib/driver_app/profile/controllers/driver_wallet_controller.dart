@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../services/api_service.dart';
 import '../controllers/driver_profile_controller.dart';
 import '../../../services/payment_service.dart';
+import '../../home/controllers/driver_home_controller.dart';
 
 /// Simple model for a wallet history entry
 class WalletHistoryItem {
@@ -140,9 +141,22 @@ class DriverWalletController extends GetxController {
           // onSuccess is called after payment returns
           final res = await ApiService.rechargeWallet(amount);
           if (!res.containsKey('error')) {
+            // Instantly update UI balances locally for snappy UX
+            balance.value += amount;
+            if (Get.isRegistered<DriverProfileController>()) {
+              Get.find<DriverProfileController>().walletBalance.value += amount;
+            }
+            if (Get.isRegistered<DriverHomeController>()) {
+              Get.find<DriverHomeController>().walletBalance.value += amount;
+            }
+
+            // Fetch latest synced data from server in background
             fetchEarnings(); 
             if (Get.isRegistered<DriverProfileController>()) {
               Get.find<DriverProfileController>().fetchProfile();
+            }
+            if (Get.isRegistered<DriverHomeController>()) {
+              Get.find<DriverHomeController>().fetchStats();
             }
             Get.back(); // back to wallet page after success
           }

@@ -129,6 +129,7 @@ class FindingDriverController extends GetxController {
   Timer? _tripStartTimer;
   Timer? _locationUpdateTimer;
   Timer? _routeDebounce;
+  Timer? _paymentPollTimer;
 
   bool _boundsFittedOnce = false;
   GoogleMapController? _attachedMapController;
@@ -229,6 +230,18 @@ class FindingDriverController extends GetxController {
   void _stopSearchTimer() {
     _searchCountdownTimer?.cancel();
     _searchCountdownTimer = null;
+  }
+
+  void startPaymentStatusPolling() {
+    if (_paymentPollTimer != null) return;
+    _paymentPollTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (rideDatabaseId.value.isEmpty || isClosing.value || stage.value != BookingStage.tripCompleted) {
+        timer.cancel();
+        _paymentPollTimer = null;
+        return;
+      }
+      fetchRideDetails(rideDatabaseId.value);
+    });
   }
 
   void retrySearch() {
@@ -513,6 +526,22 @@ class FindingDriverController extends GetxController {
           "Rider: Pickup Coords: ${pickupLat.value}, ${pickupLng.value}",
         );
         _fetchRoutes();
+
+        if (paymentStatus == 'Completed') {
+          isWaitingForCashConfirmation.value = false;
+          _paymentPollTimer?.cancel();
+          _paymentPollTimer = null;
+          if (newStatus == 'Cancelled') {
+            _finalCleanupAndGoHome();
+          } else {
+            _finishRideFlow();
+          }
+          return;
+        }
+
+        if (stage.value == BookingStage.tripCompleted) {
+          startPaymentStatusPolling();
+        }
       }
     } catch (e) {
       debugPrint("Error fetching ride details: $e");
@@ -1049,10 +1078,12 @@ class FindingDriverController extends GetxController {
     _tripStartTimer?.cancel();
     _locationUpdateTimer?.cancel();
     _routeDebounce?.cancel();
+    _paymentPollTimer?.cancel();
     _acceptTimer = null;
     _tripStartTimer = null;
     _locationUpdateTimer = null;
     _routeDebounce = null;
+    _paymentPollTimer = null;
     _stopSearchTimer();
 
     if (Get.isRegistered<SocketService>()) {
