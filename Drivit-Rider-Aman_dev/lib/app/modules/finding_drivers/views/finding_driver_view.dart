@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:get/get.dart';
 
+import '../../../routes/app_routes.dart';
 import '../../map/controllers/map_controller.dart';
 import '../../map/widgets/app_google_map.dart';
 import '../controllers/finding_driver_controller.dart';
@@ -16,7 +17,8 @@ class FindingDriverView extends StatefulWidget {
 }
 
 class _FindingDriverViewState extends State<FindingDriverView> {
-  final FindingDriverController controller = Get.find<FindingDriverController>();
+  final FindingDriverController controller =
+      Get.find<FindingDriverController>();
   final MapController mapC = Get.find<MapController>();
   GoogleMapController? internalMapC;
 
@@ -42,20 +44,10 @@ class _FindingDriverViewState extends State<FindingDriverView> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        if (controller.stage.value != BookingStage.finding) {
-          if (controller.stage.value == BookingStage.tripCompleted) {
-            Get.snackbar(
-              "Payment Pending",
-              "Please make payment to complete the ride.",
-              backgroundColor: Colors.redAccent,
-              colorText: Colors.white,
-              snackPosition: SnackPosition.TOP,
-            );
-            return;
-          }
+        if (controller.stage.value == BookingStage.tripCompleted) {
           Get.snackbar(
-            "Active Ride",
-            "You cannot leave this screen during an active ride.",
+            "Payment Pending",
+            "Please make payment to complete the ride.",
             backgroundColor: Colors.redAccent,
             colorText: Colors.white,
             snackPosition: SnackPosition.TOP,
@@ -63,42 +55,63 @@ class _FindingDriverViewState extends State<FindingDriverView> {
           return;
         }
         controller.stopAll();
-        Get.back();
+        Get.offAllNamed(Routes.home);
       },
       child: Scaffold(
         body: Obx(() {
           // Robust center logic: Current position -> Pickup position -> Fallback (0,0 or default)
           LatLng? centerPos = mapC.currentPosition.value;
           if (centerPos == null && controller.pickupLat.value != 0) {
-            centerPos = LatLng(controller.pickupLat.value, controller.pickupLng.value);
+            centerPos = LatLng(
+              controller.pickupLat.value,
+              controller.pickupLng.value,
+            );
           }
-          
+
           if (centerPos == null) {
-            return const Center(child: CircularProgressIndicator(color: Colors.orange));
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.orange),
+            );
           }
 
           // Build markers
           final markers = <Marker>{};
 
           // Pickup marker (Shown until trip starts)
-          if (controller.pickupLat.value != 0 && controller.stage.value != BookingStage.tripStarted) {
+          if (controller.pickupLat.value != 0 &&
+              controller.stage.value != BookingStage.tripStarted) {
             markers.add(
               Marker(
                 markerId: const MarkerId('pickup'),
-                position: LatLng(controller.pickupLat.value, controller.pickupLng.value),
-                icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
-                infoWindow: InfoWindow(title: "Pickup: ${controller.pickup.value}"),
+                position: LatLng(
+                  controller.pickupLat.value,
+                  controller.pickupLng.value,
+                ),
+                icon: BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueOrange,
+                ),
+                infoWindow: InfoWindow(
+                  title: "Pickup: ${controller.pickup.value}",
+                ),
               ),
             );
           }
 
           // Driver marker (using raw coordinates for 'exact' position as requested)
-          if (controller.stage.value != BookingStage.finding && controller.driverLat.value != 0) {
+          if (controller.stage.value != BookingStage.finding &&
+              controller.driverLat.value != 0) {
             markers.add(
               Marker(
                 markerId: const MarkerId('driver'),
-                position: LatLng(controller.driverLat.value, controller.driverLng.value),
-                icon: controller.driverIcon.value ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+                position: LatLng(
+                  controller.driverLat.value,
+                  controller.driverLng.value,
+                ),
+                icon:
+                    controller.driverIcon.value ??
+                    BitmapDescriptor.defaultMarkerWithHue(
+                      BitmapDescriptor.hueBlue,
+                    ),
                 anchor: const Offset(0.5, 0.5),
                 flat: true,
                 rotation: controller.displayDriverRotation.value,
@@ -108,13 +121,21 @@ class _FindingDriverViewState extends State<FindingDriverView> {
           }
 
           // Destination marker (Shown only once trip starts)
-          if (controller.stage.value == BookingStage.tripStarted && controller.dropoffLat.value != 0) {
+          if (controller.stage.value == BookingStage.tripStarted &&
+              controller.dropoffLat.value != 0) {
             markers.add(
               Marker(
                 markerId: const MarkerId('dropoff'),
-                position: LatLng(controller.dropoffLat.value, controller.dropoffLng.value),
-                icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-                infoWindow: InfoWindow(title: 'Destination: ${controller.destination.value}'),
+                position: LatLng(
+                  controller.dropoffLat.value,
+                  controller.dropoffLng.value,
+                ),
+                icon: BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueRed,
+                ),
+                infoWindow: InfoWindow(
+                  title: 'Destination: ${controller.destination.value}',
+                ),
                 zIndexInt: 50,
               ),
             );
@@ -124,12 +145,12 @@ class _FindingDriverViewState extends State<FindingDriverView> {
           final polylines = <Polyline>{};
 
           // Routing polylines
-          if (controller.stage.value == BookingStage.accepted || 
+          if (controller.stage.value == BookingStage.accepted ||
               controller.stage.value == BookingStage.arrived ||
               controller.stage.value == BookingStage.tripStarted) {
-            
             // Driver → Pickup (Only in Accepted stage)
-            if (controller.routeToPickup.isNotEmpty && controller.stage.value == BookingStage.accepted) {
+            if (controller.routeToPickup.isNotEmpty &&
+                controller.stage.value == BookingStage.accepted) {
               polylines.add(
                 Polyline(
                   polylineId: const PolylineId('route_pickup'),
@@ -140,9 +161,9 @@ class _FindingDriverViewState extends State<FindingDriverView> {
                 ),
               );
             }
- 
+
             // Pickup → Destination (Only in tripStarted stage)
-            if (controller.routeToDropoff.isNotEmpty && 
+            if (controller.routeToDropoff.isNotEmpty &&
                 controller.stage.value == BookingStage.tripStarted) {
               polylines.add(
                 Polyline(
@@ -157,7 +178,8 @@ class _FindingDriverViewState extends State<FindingDriverView> {
           }
 
           // Full actual path taken (Show after completion)
-          if (controller.stage.value == BookingStage.tripCompleted && controller.actualPath.isNotEmpty) {
+          if (controller.stage.value == BookingStage.tripCompleted &&
+              controller.actualPath.isNotEmpty) {
             polylines.add(
               Polyline(
                 polylineId: const PolylineId('full_actual_path'),
@@ -179,7 +201,8 @@ class _FindingDriverViewState extends State<FindingDriverView> {
                   interactive: true,
                   allowZoom: true,
                   showMarker: false,
-                  myLocationEnabled: controller.stage.value == BookingStage.finding,
+                  myLocationEnabled:
+                      controller.stage.value == BookingStage.finding,
                   markers: markers,
                   polylines: polylines,
                   onMapCreated: (ctrl) {

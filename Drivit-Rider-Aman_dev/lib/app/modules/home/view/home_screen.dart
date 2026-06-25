@@ -46,30 +46,11 @@ class HomeView extends GetView<HomeController> {
                 final ride = controller.activeRideData.value;
                 if (ride == null) return const SizedBox.shrink();
                 
-                final status = ride['status']?.toString() ?? '';
                 final rideId = ride['_id']?.toString() ?? '';
-                
-                String titleText = "Active Ride";
-                String descText = "We are managing your booking.";
-                IconData iconData = Icons.drive_eta_rounded;
-                Color statusColor = Colors.orange;
-
-                if (status == 'Pending') {
-                  titleText = "Finding Driver...";
-                  descText = "Searching for the best driver near you.";
-                  iconData = Icons.search_rounded;
-                  statusColor = Colors.orange;
-                } else if (status == 'Accepted' || status == 'Arrived') {
-                  titleText = "Driver Assigned";
-                  descText = "Your driver is on the way.";
-                  iconData = Icons.person_pin_circle_rounded;
-                  statusColor = Colors.green;
-                } else if (status == 'Ongoing') {
-                  titleText = "Ride in Progress";
-                  descText = "Heading to your destination.";
-                  iconData = Icons.navigation_rounded;
-                  statusColor = Colors.blue;
-                }
+                final bookingId = ride['booking_id']?.toString() ?? "";
+                final String displayId = bookingId.isNotEmpty 
+                    ? bookingId 
+                    : "RID${(rideId.substring((rideId.length - 8).clamp(0, rideId.length))).toUpperCase()}";
 
                 return TweenAnimationBuilder<double>(
                   tween: Tween<double>(begin: 0.0, end: 1.0),
@@ -82,16 +63,15 @@ class HomeView extends GetView<HomeController> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: const Color(0xFFFF9800), // Vibrant premium orange (matching Driver app)
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.12),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
+                          color: Colors.black26,
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
                         ),
                       ],
-                      border: Border.all(color: Colors.grey.shade100, width: 1),
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
@@ -104,66 +84,38 @@ class HomeView extends GetView<HomeController> {
                               arguments: {'rideId': rideId},
                             );
                           },
+                          borderRadius: BorderRadius.circular(16),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             child: Row(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: statusColor.withValues(alpha: 0.1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(iconData, color: statusColor, size: 24),
-                                ),
-                                const SizedBox(width: 14),
+                                const Icon(Icons.directions_car, color: Colors.white, size: 24),
+                                const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
+                                      const Text(
+                                        "Active Trip is Live",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 14,
+                                        ),
+                                      ),
                                       Text(
-                                        titleText,
+                                        "Booking ID: $displayId • Tap to resume",
                                         style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        descText,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade600,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange.shade50,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: const [
-                                      Text(
-                                        "View",
-                                        style: TextStyle(
+                                          color: Colors.white70,
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.orange,
                                         ),
                                       ),
-                                      SizedBox(width: 2),
-                                      Icon(Icons.arrow_forward_ios, size: 10, color: Colors.orange),
                                     ],
                                   ),
                                 ),
+                                const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
                               ],
                             ),
                           ),
