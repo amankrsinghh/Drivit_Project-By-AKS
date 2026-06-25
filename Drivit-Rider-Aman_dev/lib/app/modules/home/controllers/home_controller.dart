@@ -201,6 +201,19 @@ class HomeController extends GetxController {
 
     try {
       debugPrint("📍 BOOKNOW [2]: Opening loader dialog...");
+      
+      // Fetch fresh geofence setting from backend first
+      try {
+        final settings = await ApiService.getPublicSettings();
+        if (settings.containsKey('enable_geofence_boundary')) {
+          final val = settings['enable_geofence_boundary'];
+          AuthStore.enableGeofenceBoundary = (val == true || val.toString().toLowerCase() == 'true');
+          debugPrint("📍 BOOKNOW: Updated AuthStore.enableGeofenceBoundary = ${AuthStore.enableGeofenceBoundary}");
+        }
+      } catch (e) {
+        debugPrint("📍 BOOKNOW: Error fetching settings in navigateToSelectRide: $e");
+      }
+
       final activeRide = await getActiveOrPendingPaymentRide();
       debugPrint("📍 BOOKNOW [3]: getActiveOrPendingPaymentRide returned → activeRide=${activeRide == null ? 'null' : activeRide['status']}");
 
@@ -309,13 +322,13 @@ class HomeController extends GetxController {
           debugPrint("📍 BOOKNOW [13]: OUTSIDE Chennai boundary — showing dialog.");
           Get.dialog(
             AlertDialog(
-              title: const Text("Service Unavailable"),
+              title: const Text("Service Area Limit"),
               content: const Text(
-                  "You are out of Chennai boundary area. We only serve within Chennai city limits."),
+                  "We currently only offer services within the Chennai city boundary. Bookings are only allowed inside this area."),
               actions: [
                 TextButton(
                   onPressed: () => Get.back(),
-                  child: const Text("OK", style: TextStyle(color: Colors.orange)),
+                  child: const Text("OK", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),

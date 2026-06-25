@@ -16,6 +16,7 @@ import '../../../../core/services/recent_destinations_service.dart';
 import '../widgeets/schedule_ride_dialog.dart';
 import '../../../finding_drivers/controllers/finding_driver_controller.dart';
 import '../../widgets/not_serviceable_bottom_sheet.dart';
+import '../../../../core/utils/geofence_util.dart';
 
 class SelectRideController extends GetxController {
   final tripOpen = false.obs;
@@ -809,6 +810,11 @@ class SelectRideController extends GetxController {
 
   Future<void> fetchPricingSettings() async {
     final settings = await ApiService.getPublicSettings();
+    if (settings.containsKey('enable_geofence_boundary')) {
+      final val = settings['enable_geofence_boundary'];
+      AuthStore.enableGeofenceBoundary = (val == true || val.toString().toLowerCase() == 'true');
+      debugPrint("SelectRideController: Updated AuthStore.enableGeofenceBoundary = ${AuthStore.enableGeofenceBoundary}");
+    }
     if (settings.containsKey('base_price_per_km')) {
       basePricePerKm.value =
           double.tryParse(settings['base_price_per_km'].toString()) ?? 10.0;
@@ -904,6 +910,27 @@ class SelectRideController extends GetxController {
 
   void _actuallyOpenScheduleDialog() {
     final bool isOneWay = tripType.value == "One Way";
+
+    final bool geofenceEnabled = AuthStore.enableGeofenceBoundary;
+    if (geofenceEnabled &&
+        pickupLat.value != 0 &&
+        pickupLng.value != 0 &&
+        !GeofenceUtil.isInsideChennai(pickupLat.value, pickupLng.value)) {
+      Get.dialog(
+        AlertDialog(
+          title: const Text("Service Area Limit"),
+          content: const Text(
+              "We currently only offer services within the Chennai city boundary. Your selected pickup location is outside this area."),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text("OK", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
 
     if (!isOneWay && requiredHours.value > maxAllowedHours) {
       Get.snackbar("Time Limit Exceeded", "The selected route exceeds the maximum allowed time limit.",
@@ -1053,6 +1080,27 @@ class SelectRideController extends GetxController {
       dropoffLng.value = pickupLng.value;
     } else if (destination.value == "Destination" || destination.value.isEmpty) {
       debugPrint("🚕 BN[BAIL]: destination empty/unset = '${destination.value}'");
+      return;
+    }
+
+    final bool geofenceEnabled = AuthStore.enableGeofenceBoundary;
+    if (geofenceEnabled &&
+        pickupLat.value != 0 &&
+        pickupLng.value != 0 &&
+        !GeofenceUtil.isInsideChennai(pickupLat.value, pickupLng.value)) {
+      Get.dialog(
+        AlertDialog(
+          title: const Text("Service Area Limit"),
+          content: const Text(
+              "We currently only offer services within the Chennai city boundary. Your selected pickup location is outside this area."),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text("OK", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
       return;
     }
 
