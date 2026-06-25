@@ -130,7 +130,7 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                                     _buildTripTypeSelection(),
                                     const SizedBox(height: 12),
                                   ],
-                                  if (controller.tripType.value != "One Way") ...[
+                                  if (controller.isOutstationFlow.value) ...[
                                     _buildPackageSelection(),
                                     const SizedBox(height: 12),
                                   ],
@@ -760,8 +760,8 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
               const SizedBox(height: 8),
             ],
 
-            // Hourly Package Cost (Round Trip / Outstation only)
-            if (controller.selectedPackage.value.isNotEmpty && controller.tripType.value != "One Way") ...[
+            // Hourly Package Cost
+            if (controller.selectedPackage.value.isNotEmpty) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -883,9 +883,10 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                               _showFareDetailsDialog(
                                 context,
                                 categoryName: "${controller.selectedCar.value} - ${controller.selectedCarModel.value}",
-                                baseCost: controller.tripType.value == "One Way"
-                                    ? controller.distanceCost.value
-                                    : controller.hourlyCost.value,
+                                baseCost: controller.tripType.value == "Round Trip"
+                                    ? 0.0
+                                    : controller.distanceCost.value,
+                                hourlyCost: controller.hourlyCost.value,
                                 platformCharge: controller.platformCharge.value,
                                 gstPercentage: controller.gstPercentage.value,
                                 gstAmount: controller.gstAmount.value,
@@ -1097,15 +1098,24 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
     required double carWashCharge,
     required double totalAmount,
     required String tripTypeName,
+    double hourlyCost = 0.0,
   }) {
     final isOutstation = tripTypeName == "Outstation" || tripTypeName == "Round Trip" || controller.isOutstationFlow.value;
     final isOneWay = tripTypeName == "One Way";
     
     String subtitleText = "Here's a fare estimate for your trip";
-    if (isOutstation && controller.selectedPackage.value.isNotEmpty) {
-      subtitleText = "Here's a fare estimate for your ${controller.selectedPackage.value} $tripTypeName Trip";
+    if (controller.selectedPackage.value.isNotEmpty) {
+      if (controller.isOutstationFlow.value) {
+        subtitleText = "Here's a fare estimate for your ${controller.selectedPackage.value} $tripTypeName Outstation Trip";
+      } else {
+        subtitleText = "Here's a fare estimate for your ${controller.selectedPackage.value} Local Trip";
+      }
     } else if (isOneWay && controller.calculatedDistance.value > 0) {
-      subtitleText = "Here's a fare estimate for your One Way Trip";
+      if (controller.isOutstationFlow.value) {
+        subtitleText = "Here's a fare estimate for your One Way Outstation Trip";
+      } else {
+        subtitleText = "Here's a fare estimate for your Local Trip";
+      }
     }
 
     showDialog(
@@ -1182,24 +1192,42 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  isOutstation && controller.selectedPackage.value.isNotEmpty
-                                      ? "Time Package (${controller.selectedPackage.value})"
-                                      : "Base Fare",
-                                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                          if (baseCost > 0) ...[
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    "Base Fare (Distance)",
+                                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                "₹${baseCost.toStringAsFixed(2)}",
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
+                                Text(
+                                  "₹${baseCost.toStringAsFixed(2)}",
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                          if (hourlyCost > 0) ...[
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    "Time Package (${controller.selectedPackage.value})",
+                                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                                  ),
+                                ),
+                                Text(
+                                  "₹${hourlyCost.toStringAsFixed(2)}",
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                          ],
                           if (carWashCharge > 0) ...[
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -893,6 +893,11 @@ class DriverTripController extends GetxController {
   }
 
   void continueFinding() {
+    // Clear active trip guard in SocketService so driver can receive new requests
+    if (Get.isRegistered<SocketService>()) {
+      Get.find<SocketService>().clearActiveTrip();
+    }
+
     // We navigate home first. The binding will ensure DriverHomeController exists.
     Get.offAllNamed(DriverRoutes.home);
     

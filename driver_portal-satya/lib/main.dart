@@ -35,6 +35,7 @@ void main() async {
   ApiService.enableGeofenceBoundary =
       prefs.getBool('enable_geofence_boundary') ?? false;
   ApiService.freeRidesCount = prefs.getInt('free_rides_count') ?? 3;
+  ApiService.initialOnlineStatus = prefs.getBool('is_online') ?? false;
 
   // Fetch settings in background to avoid blocking app launch
   ApiService.getPublicSettings()

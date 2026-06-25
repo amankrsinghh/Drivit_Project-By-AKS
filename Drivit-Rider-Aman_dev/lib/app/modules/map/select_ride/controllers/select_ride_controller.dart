@@ -693,7 +693,7 @@ class SelectRideController extends GetxController {
       distanceCost.value = (dist * basePricePerKm.value * multiplier).roundToDouble();
 
       double hours = 0.0;
-      if (tripType.value == "One Way") {
+      if (isAirportFlow.value || !isOutstationFlow.value) {
         selectedPackage.value = "";
         hours = 0.0;
       } else {
@@ -932,7 +932,7 @@ class SelectRideController extends GetxController {
       return;
     }
 
-    if (!isOneWay && requiredHours.value > maxAllowedHours) {
+    if (!isAirportFlow.value && requiredHours.value > maxAllowedHours) {
       Get.snackbar("Time Limit Exceeded", "The selected route exceeds the maximum allowed time limit.",
           snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
       return;
@@ -980,8 +980,8 @@ class SelectRideController extends GetxController {
       return;
     }
     
-    // Outstation and local Round Trip require a package. Local One Way does not.
-    final bool doesNotRequirePackage = tripType.value == "One Way";
+    // Airport flow does not require a package. Local and Outstation (One Way and Round Trip) require a package.
+    final bool doesNotRequirePackage = isAirportFlow.value || !isOutstationFlow.value;
     if (!doesNotRequirePackage && selectedPackage.value.isEmpty) {
       Get.snackbar("Package Required", "Please select estimated usage hours.",
           snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
@@ -1104,7 +1104,7 @@ class SelectRideController extends GetxController {
       return;
     }
 
-    final bool doesNotRequirePackage = tripType.value == "One Way";
+    final bool doesNotRequirePackage = isAirportFlow.value || !isOutstationFlow.value;
     if (!doesNotRequirePackage && selectedPackage.value.isEmpty) {
       debugPrint("🚕 BN[BAIL]: package required but empty. tripType=${tripType.value}");
       return;

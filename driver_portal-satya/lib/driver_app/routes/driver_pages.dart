@@ -162,6 +162,7 @@ class DriverPages {
 
     GetPage(
       name: DriverRoutes.editProfile,
+      
       page: () => const DriverEditProfileView(),
     ),
     GetPage(

@@ -22,6 +22,7 @@ class ApiService {
   static Map<String, dynamic>? cachedProfile;
   static bool enableGeofenceBoundary = false;
   static int freeRidesCount = 3;
+  static bool initialOnlineStatus = false;
 
 
   static Future<Map<String, dynamic>> getPublicSettings() async {

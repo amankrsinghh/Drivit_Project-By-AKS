@@ -172,18 +172,18 @@ class DriverTripEarningView extends StatelessWidget {
                     _sectionCard([
                       // Round Trip → hourly billing only; One Way → distance billing only
                       Obx(() {
-                        if (controller.tripType.value == 'Round Trip') {
-                          return Column(children: [
+                        return Column(children: [
+                          if (controller.distanceCost.value > 0)
+                            _row("Base Fare", "₹ ${controller.distanceCost.value.toStringAsFixed(0)}"),
+                          if (controller.hourlyCost.value > 0 || (controller.hourlyPackage.value.isNotEmpty && controller.hourlyPackage.value != "-")) ...[
                             _row("Hourly Package", controller.hourlyPackage.value),
                             _row("Hourly Rate", controller.hourlyRate.value),
                             if (controller.hourlyCost.value > 0)
                               _row("Package Cost", "₹ ${controller.hourlyCost.value.toStringAsFixed(0)}"),
-                            _row("Extra Time Used", controller.extraTimeUsed.value),
-                          ]);
-                        } else {
-                          // One Way / Outstation: distance-based
-                          return const SizedBox.shrink();
-                        }
+                            if (controller.extraTimeUsed.value.isNotEmpty && controller.extraTimeUsed.value != "-" && controller.extraTimeUsed.value != "0 min")
+                              _row("Extra Time Used", controller.extraTimeUsed.value),
+                          ],
+                        ]);
                       }),
                       Obx(() => controller.requireCarWash.value
                         ? _row("Car Wash Service", "₹ ${controller.carWashPrice.value.toStringAsFixed(0)}")

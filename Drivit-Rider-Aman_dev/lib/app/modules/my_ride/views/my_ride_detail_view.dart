@@ -38,15 +38,20 @@ class MyRideDetailView extends StatelessWidget {
 
   String _finalFareHint() {
     if (isCompleted) {
-      // Only show hourly package hint for Round Trip
-      if (item.tripType == 'Round Trip') {
-        return "Base on ${item.hourlyPackageHours} hour package";
+      if (item.hourlyPackageHours > 0) {
+        if (item.tripType == 'Round Trip') {
+          return "Base on ${item.hourlyPackageHours} hour package";
+        }
+        return "Base on distance + ${item.hourlyPackageHours} hour package";
       }
       return "Distance/time based fare";
     }
     if (item.status == RideStatus.upcoming || item.status == RideStatus.unassigned) {
-      if (item.tripType == 'Round Trip') {
-        return "Estimated fare based on ${item.hourlyPackageHours} hour package";
+      if (item.hourlyPackageHours > 0) {
+        if (item.tripType == 'Round Trip') {
+          return "Estimated fare based on ${item.hourlyPackageHours} hour package";
+        }
+        return "Estimated fare based on distance + ${item.hourlyPackageHours} hour package";
       }
       return "Estimated distance/time based fare";
     }
@@ -336,8 +341,7 @@ class MyRideDetailView extends StatelessWidget {
           _kv("Car Type", item.carType),
           _kv("Car Model", item.carModel),
           _kv("Trip Type", item.tripType),
-          // Only show package for non-One-Way trips
-          if (item.tripType != 'One Way') _kv("Usage Package", item.carPackage),
+          if (item.carPackage != '-' && item.carPackage.isNotEmpty) _kv("Usage Package", item.carPackage),
           _kv("Car Wash Required", item.requireCarWash ? "Yes" : "No"),
           if (item.scheduledTimeText != "-") _kv("Scheduled Time", item.scheduledTimeText),
           _kv("Booking Time", item.bookingTimeText),
@@ -572,11 +576,12 @@ class MyRideDetailView extends StatelessWidget {
 
             const Text("Fare breakdown", style: TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 10),
-            // Round Trip → hourly package billing (no estimated time, no distance cost)
-            // One Way → distance/time fare only (no hourly fields)
-            if (item.tripType == 'Round Trip') ...[
+            if (item.distanceCost > 0)
+              _kv("Base Fare", "₹ ${item.distanceCost.toStringAsFixed(0)}"),
+            if (item.hourlyPackageHours > 0) ...[
               _kv("Hourly package", "${item.hourlyPackageHours} hours"),
-              _kv("Extra time used", "${item.extraTimeUsedMin} min"),
+              if (isCompleted || item.extraTimeUsedMin > 0)
+                _kv("Extra time used", "${item.extraTimeUsedMin} min"),
               _kv("Hourly rate", "₹ ${item.hourlyRate.toStringAsFixed(0)}/hour"),
               _kv("Hourly Package Cost", "₹ ${(item.hourlyPackageHours * item.hourlyRate).toStringAsFixed(0)}"),
             ],

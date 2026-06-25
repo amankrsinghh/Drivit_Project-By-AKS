@@ -12,6 +12,7 @@ import '../../modules/finding_drivers/controllers/finding_driver_controller.dart
 import '../../modules/my_ride/models/ride_items.dart';
 import '../../modules/profile/controllers/profile_controller.dart';
 import '../../routes/app_routes.dart'; // import for Get.toNamed(Routes.findingDriver)
+import '../../modules/home/controllers/home_controller.dart';
 
 class SocketService extends GetxService {
   IO.Socket? socket;
@@ -125,6 +126,11 @@ class SocketService extends GetxService {
         // Refresh My Ride list if open
         if (Get.isRegistered<MyRideController>()) {
           Get.find<MyRideController>().fetchMyRides(silent: true);
+        }
+
+        // Refresh Home active ride if HomeController is registered
+        if (Get.isRegistered<HomeController>()) {
+          Get.find<HomeController>().refreshActiveRideState();
         }
 
         // ✅ HANDLE SCHEDULED RIDE UNASSIGNMENT

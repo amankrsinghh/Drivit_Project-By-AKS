@@ -165,7 +165,11 @@ class _DriverBottomSheetState extends State<DriverBottomSheet> {
                             Text(
                               controller.isCancellationPaymentFlow.value
                                   ? "Review and pay the cancellation charge to the driver"
-                                  : "Review your hourly package fare and make\npackages to the driver",
+                                  : (controller.hourlyCost.value > 0 || (controller.hourlyPackage.value.isNotEmpty && controller.hourlyPackage.value != "-")
+                                      ? (controller.tripType.value == "Round Trip"
+                                          ? "Review your hourly package fare and make\npayment to the driver"
+                                          : "Review your distance + hourly package fare and make\npayment to the driver")
+                                      : "Review your distance/time based fare and make\npayment to the driver"),
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 color: Colors.grey,
@@ -976,20 +980,21 @@ class _TripCompletedUI extends StatelessWidget {
           } else {
             return Column(
               children: [
-                controller.tripType.value == "Round Trip"
-                    ? Column(
-                        children: [
-                          _KV("Hourly package", () => controller.hourlyPackage.value),
-                          _KV("Extra time used", () => controller.extraTimeUsed.value),
-                          _KV("Hourly rate", () => controller.hourlyRate.value),
-                        ],
-                      )
-                    : const SizedBox.shrink(),
-                if (controller.tripType.value == "Round Trip" && controller.hourlyCost.value > 0)
+                if (controller.distanceCost.value > 0)
+                  _KV(
+                    "Base Fare",
+                    () => "₹ ${controller.distanceCost.value.toStringAsFixed(0)}",
+                  ),
+                if (controller.hourlyCost.value > 0 || (controller.hourlyPackage.value.isNotEmpty && controller.hourlyPackage.value != "-")) ...[
+                  _KV("Hourly package", () => controller.hourlyPackage.value),
+                  if (controller.extraTimeUsed.value.isNotEmpty && controller.extraTimeUsed.value != "-" && controller.extraTimeUsed.value != "0 min")
+                    _KV("Extra time used", () => controller.extraTimeUsed.value),
+                  _KV("Hourly rate", () => controller.hourlyRate.value),
                   _KV(
                     "Hourly Package Cost",
                     () => "₹ ${controller.hourlyCost.value.toStringAsFixed(0)}",
                   ),
+                ],
                 if (controller.requireCarWash.value)
                   _KV(
                     "Car Wash",

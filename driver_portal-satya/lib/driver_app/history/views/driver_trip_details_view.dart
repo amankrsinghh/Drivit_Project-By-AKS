@@ -381,12 +381,14 @@ class _DriverTripDetailsViewState extends State<DriverTripDetailsView> {
                               ),
                             ),
                             const SizedBox(height: 15),
-                            // Round Trip → hourly billing (no estimated time, no distance)
-                            // One Way → distance billing (no hourly fields)
-                            if (trip.tripType == 'Round Trip') ...[
+                            if (trip.distanceCost > 0)
+                              _kv("Base Fare", "₹ ${trip.distanceCost}"),
+                            if (trip.hourlyPackageHours > 0) ...[
                               _kv("Hourly package", "${trip.hourlyPackageHours} hours"),
                               _kv("Hourly rate", "₹ ${trip.hourlyRate}/hour"),
-                              _kv("Extra time used", "${trip.extraTimeUsedMin} min"),
+                              if (trip.status == TripStatus.completed || trip.extraTimeUsedMin > 0)
+                                _kv("Extra time used", "${trip.extraTimeUsedMin} min"),
+                              _kv("Hourly Package Cost", "₹ ${trip.hourlyPackageHours * trip.hourlyRate}"),
                             ],
 
                             if (trip.requireCarWash)
@@ -642,8 +644,7 @@ class _DriverTripDetailsViewState extends State<DriverTripDetailsView> {
           _kv("Car Type", trip.carType),
           _kv("Car Model", trip.carBrand),
           _kv("Trip Type", trip.tripType),
-          // Only show package for non-One-Way trips
-          if (trip.tripType != 'One Way') _kv("Usage Package", trip.carUsage),
+          if (trip.carUsage != '-' && trip.carUsage.isNotEmpty) _kv("Usage Package", trip.carUsage),
           _kv("Car Wash Required", trip.requireCarWash ? "Yes" : "No"),
           if (trip.scheduledTimeText != "-") _kv("Scheduled Time", trip.scheduledTimeText),
           _kv("Booking Time", trip.bookingTimeText),

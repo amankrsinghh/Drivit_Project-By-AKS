@@ -16,7 +16,7 @@ import '../../../app/core/utils/geofence_util.dart';
 
 class DriverHomeController extends GetxController {
   final index = 0.obs; // 0 Home, 1 Package, 2 Finding, 3 History, 4 Profile
-  final isOnline = false.obs;
+  final isOnline = (ApiService.initialOnlineStatus).obs;
 
   static bool _initialized = false;
 
@@ -237,7 +237,7 @@ class DriverHomeController extends GetxController {
       final ride = await ApiService.getActiveTrip();
       if (ride == null) {
         if (!_initialized) {
-          await _resetToOffline();
+          await _restoreOrResetOnlineStatus();
           _initialized = true;
         }
         return;
@@ -246,7 +246,7 @@ class DriverHomeController extends GetxController {
       final rideId = ride['_id']?.toString() ?? '';
       if (rideId.isEmpty) {
         if (!_initialized) {
-          await _resetToOffline();
+          await _restoreOrResetOnlineStatus();
           _initialized = true;
         }
         return;
@@ -262,7 +262,7 @@ class DriverHomeController extends GetxController {
       if (!isResumable) {
         debugPrint("DriverHome: Found ride but status is $status (paymentStatus: $pStatus). Not resuming.");
         if (!_initialized) {
-          await _resetToOffline();
+          await _restoreOrResetOnlineStatus();
           _initialized = true;
         }
         return;
@@ -273,7 +273,7 @@ class DriverHomeController extends GetxController {
       if (cancelledIds.contains(rideId)) {
         debugPrint("DriverHome: Active ride found but was locally cancelled/rejected ($rideId). Skipping.");
         if (!_initialized) {
-          await _resetToOffline();
+          await _restoreOrResetOnlineStatus();
           _initialized = true;
         }
         return;
@@ -296,6 +296,7 @@ class DriverHomeController extends GetxController {
         final socket = Get.find<SocketService>();
         socket.goOnline();
         socket.setFindingStatus(true);
+        socket.isInActiveTrip = true;
       }
 
       _initialized = true;
@@ -334,7 +335,7 @@ class DriverHomeController extends GetxController {
     } catch (e) {
       debugPrint("Error checking active trip on launch: $e");
       if (!_initialized) {
-        await _resetToOffline();
+        await _restoreOrResetOnlineStatus();
         _initialized = true;
       }
     }
@@ -416,6 +417,82 @@ class DriverHomeController extends GetxController {
       final socket = Get.find<SocketService>();
       socket.goOffline();
       socket.setFindingStatus(false);
+      socket.clearActiveTrip();
+    }
+  }
+
+  Future<void> _restoreOrResetOnlineStatus() async {
+    try {
+      final bool wasOnline = await ApiService.getOnlineStatus();
+      if (wasOnline) {
+        debugPrint("DriverHome: Stored status was online. Restoring online status on launch.");
+        
+        // Retrieve location silently
+        double? lat = driverLat.value != 0.0 ? driverLat.value : null;
+        double? lng = driverLng.value != 0.0 ? driverLng.value : null;
+        
+        if (lat == null || lng == null) {
+          try {
+            final lastPos = await Geolocator.getLastKnownPosition();
+            if (lastPos != null) {
+              lat = lastPos.latitude;
+              lng = lastPos.longitude;
+              driverLat.value = lat;
+              driverLng.value = lng;
+            }
+          } catch (_) {}
+        }
+        
+        if (lat == null || lng == null) {
+          try {
+            final currentPos = await Geolocator.getCurrentPosition(
+              locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.high,
+                timeLimit: Duration(seconds: 3),
+              ),
+            );
+            lat = currentPos.latitude;
+            lng = currentPos.longitude;
+            driverLat.value = lat;
+            driverLng.value = lng;
+          } catch (_) {}
+        }
+
+        // Geofence check on launch
+        final bool geofenceEnabled = ApiService.enableGeofenceBoundary;
+        if (geofenceEnabled && lat != null && lng != null && !GeofenceUtil.isInsideChennai(lat, lng)) {
+          debugPrint("DriverHome: Driver is outside Chennai boundary. Resetting to offline.");
+          await _resetToOffline();
+          Get.snackbar(
+            "Access Denied",
+            "You are out of Chennai boundary area. You have been taken offline.",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+          return;
+        }
+
+        // Set online status in controller
+        isOnline.value = true;
+        
+        // Sync with backend
+        try {
+          await ApiService.toggleOnline(true, lat: lat, lng: lng);
+        } catch (_) {}
+
+        // Sync with socket
+        if (Get.isRegistered<SocketService>()) {
+          final socket = Get.find<SocketService>();
+          socket.goOnline();
+          socket.setFindingStatus(true);
+        }
+      } else {
+        await _resetToOffline();
+      }
+    } catch (e) {
+      debugPrint("Error restoring online status: $e");
+      await _resetToOffline();
     }
   }
 

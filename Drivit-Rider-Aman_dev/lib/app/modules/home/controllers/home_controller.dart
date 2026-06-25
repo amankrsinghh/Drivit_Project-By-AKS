@@ -1,5 +1,6 @@
 
 
+import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -22,6 +23,8 @@ import 'package:geolocator/geolocator.dart';
 class HomeController extends GetxController {
   final selectedIndex = 0.obs;
   DateTime? _lastBackPress;
+  final activeRideData = Rxn<Map<String, dynamic>>();
+  Timer? _activeRideTimer;
 
   @override
   void onInit() {
@@ -48,6 +51,22 @@ class HomeController extends GetxController {
 
     // ✅ CHECK FOR ACTIVE RIDE ON APP LAUNCH
     _checkActiveRideOnLaunch();
+
+    // Refresh active ride for card display
+    refreshActiveRideState();
+
+    // Periodically sync/check active ride status as fallback
+    _activeRideTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (AuthStore.token != null && AuthStore.token!.isNotEmpty) {
+        refreshActiveRideState();
+      }
+    });
+  }
+
+  @override
+  void onClose() {
+    _activeRideTimer?.cancel();
+    super.onClose();
   }
 
   /// Retrieves an ongoing ride or a completed ride with pending payment.
@@ -144,6 +163,8 @@ class HomeController extends GetxController {
     
     selectedIndex.value = index;
     _lastBackPress = null; 
+
+    refreshActiveRideState();
 
     // ✅ Refresh My Ride data after the UI frame has switched to ensure maximum responsiveness
     if (index == 1 && Get.isRegistered<MyRideController>()) {
@@ -361,6 +382,24 @@ class HomeController extends GetxController {
       debugPrint("📍 BOOKNOW [ERROR]: navigateToSelectRide threw: $e");
       debugPrint("📍 BOOKNOW [STACK]: $stack");
       if (Get.isDialogOpen == true) Get.back();
+    }
+  }
+
+  Future<void> refreshActiveRideState() async {
+    try {
+      final ride = await getActiveOrPendingPaymentRide();
+      if (ride != null) {
+        final status = ride['status']?.toString() ?? '';
+        // Only show card for live active stages
+        if (['Pending', 'Accepted', 'Arrived', 'Ongoing'].contains(status)) {
+          activeRideData.value = ride;
+          return;
+        }
+      }
+      activeRideData.value = null;
+    } catch (e) {
+      debugPrint("Error in refreshActiveRideState: $e");
+      activeRideData.value = null;
     }
   }
 }

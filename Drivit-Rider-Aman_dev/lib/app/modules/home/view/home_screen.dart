@@ -25,15 +25,156 @@ class HomeView extends GetView<HomeController> {
       },
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: Obx(
-          () => IndexedStack(
-            index: controller.selectedIndex.value,
-            children: const [
-              _HomeTab(), // tab 0
-              SafeArea(child: MyRideView()), // tab 1
-              SafeArea(child: ProfileView()), // tab 2
-            ],
-          ),
+        body: Stack(
+          children: [
+            Obx(
+              () => IndexedStack(
+                index: controller.selectedIndex.value,
+                children: const [
+                  _HomeTab(), // tab 0
+                  SafeArea(child: MyRideView()), // tab 1
+                  SafeArea(child: ProfileView()), // tab 2
+                ],
+              ),
+            ),
+            // Floating active ride card
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Obx(() {
+                final ride = controller.activeRideData.value;
+                if (ride == null) return const SizedBox.shrink();
+                
+                final status = ride['status']?.toString() ?? '';
+                final rideId = ride['_id']?.toString() ?? '';
+                
+                String titleText = "Active Ride";
+                String descText = "We are managing your booking.";
+                IconData iconData = Icons.drive_eta_rounded;
+                Color statusColor = Colors.orange;
+
+                if (status == 'Pending') {
+                  titleText = "Finding Driver...";
+                  descText = "Searching for the best driver near you.";
+                  iconData = Icons.search_rounded;
+                  statusColor = Colors.orange;
+                } else if (status == 'Accepted' || status == 'Arrived') {
+                  titleText = "Driver Assigned";
+                  descText = "Your driver is on the way.";
+                  iconData = Icons.person_pin_circle_rounded;
+                  statusColor = Colors.green;
+                } else if (status == 'Ongoing') {
+                  titleText = "Ride in Progress";
+                  descText = "Heading to your destination.";
+                  iconData = Icons.navigation_rounded;
+                  statusColor = Colors.blue;
+                }
+
+                return TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 300),
+                  builder: (context, val, child) {
+                    return Transform.scale(
+                      scale: 0.95 + (0.05 * val),
+                      child: Opacity(opacity: val, child: child),
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.12),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                      border: Border.all(color: Colors.grey.shade100, width: 1),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Get.toNamed(
+                              Routes.findingDriver,
+                              arguments: {'rideId': rideId},
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: statusColor.withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(iconData, color: statusColor, size: 24),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        titleText,
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        descText,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade600,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.shade50,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Text(
+                                        "View",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.orange,
+                                        ),
+                                      ),
+                                      SizedBox(width: 2),
+                                      Icon(Icons.arrow_forward_ios, size: 10, color: Colors.orange),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ],
         ),
         bottomNavigationBar: const AppBottomNav(),
       ),
@@ -108,7 +249,7 @@ class _HomeTab extends GetView<HomeController> {
                       Row(
                         children: [
                           _buildServiceCard(
-                            title: "One Way",
+                            title: "Local",
                             subtitle: "Standard point-to-point drop-off",
                             icon: Icons.navigation_rounded,
                             iconColor: const Color(0xffF38900),

@@ -76,11 +76,11 @@ class _DriverNewRequestPopupState extends State<DriverNewRequestPopup> {
     final String tripType = widget.ride['tripType']?.toString() ?? 'One Way';
     String package = widget.ride['carPackage']?.toString() ?? widget.ride['package']?.toString() ?? widget.ride['packageHours']?.toString() ?? '';
     final bool isRoundTrip = tripType == 'Round Trip';
-    if (isRoundTrip && package.isNotEmpty && !package.toLowerCase().contains("hr")) {
+    if (package.isNotEmpty && !package.toLowerCase().contains("hr")) {
       package = "$package Hours";
     }
     final bool isOutstation = widget.ride['isOutstation'] == true || widget.ride['isOutstation'] == 'true';
-    final bool hasPackage = package.isNotEmpty && tripType != 'One Way';
+    final bool hasPackage = package.isNotEmpty;
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
