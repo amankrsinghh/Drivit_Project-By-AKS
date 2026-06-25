@@ -130,32 +130,6 @@ class _HomeTab extends GetView<HomeController> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 15),
-                      Row(
-                        children: [
-                          _buildServiceCard(
-                            title: "Round Trip",
-                            subtitle: "Return to your starting location",
-                            icon: Icons.autorenew_rounded,
-                            iconColor: const Color(0xff7B1FA2),
-                            iconBgColor: const Color(0xffF3E5F5),
-                            onTap: () => controller.navigateToSelectRide(
-                              arguments: {'tripType': 'Round Trip'},
-                            ),
-                          ),
-                          const SizedBox(width: 15),
-                          _buildServiceCard(
-                            title: "Airport Pick/Drop",
-                            subtitle: "Hassle-free airport transfers",
-                            icon: Icons.local_airport_rounded,
-                            iconColor: const Color(0xff2E7D32),
-                            iconBgColor: const Color(0xffE8F5E9),
-                            onTap: () => controller.navigateToSelectRide(
-                              arguments: {'tripType': 'airport'},
-                            ),
-                          ),
-                        ],
-                      ),
                       const SizedBox(height: 30),
                       // Existing view tariffs & fares card preserved below the grid
                       GestureDetector(

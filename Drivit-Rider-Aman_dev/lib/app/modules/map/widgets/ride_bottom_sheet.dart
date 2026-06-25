@@ -130,7 +130,7 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                                     _buildTripTypeSelection(),
                                     const SizedBox(height: 12),
                                   ],
-                                  if (controller.tripType.value != "One Way" && !controller.isOutstationFlow.value) ...[
+                                  if (controller.tripType.value != "One Way") ...[
                                     _buildPackageSelection(),
                                     const SizedBox(height: 12),
                                   ],

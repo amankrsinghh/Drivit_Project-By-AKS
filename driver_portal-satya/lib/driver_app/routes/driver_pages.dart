@@ -52,10 +52,7 @@ import '../home/views/driver_notification_view.dart';
 
 class DriverPages {
   static final pages = <GetPage>[
-    GetPage(
-      name: DriverRoutes.splash,
-      page: () => const DriverSplashView(),
-    ),
+    GetPage(name: DriverRoutes.splash, page: () => const DriverSplashView()),
     GetPage(
       name: DriverRoutes.notifications,
       page: () => const DriverNotificationView(),
