@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../driver_app/home/controllers/driver_home_controller.dart';
 import '../driver_app/trip/controllers/driver_trip_controller.dart';
 import '../driver_app/auth/controllers/driver_otp_controller.dart';
+import '../driver_app/routes/driver_routes.dart';
 import 'api_service.dart';
 import 'socket_service.dart';
 
@@ -25,6 +26,79 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     }
 
     final type = data['type']?.toString();
+    if (type == 'new_ride') {
+      final rideId = data['rideId']?.toString();
+      if (rideId != null && rideId.isNotEmpty) {
+        try {
+          final localNotifs = FlutterLocalNotificationsPlugin();
+          
+          const AndroidInitializationSettings initializationSettingsAndroid =
+              AndroidInitializationSettings('@mipmap/launcher_icon');
+          const InitializationSettings initializationSettings = InitializationSettings(
+            android: initializationSettingsAndroid,
+            iOS: DarwinInitializationSettings(),
+          );
+          await localNotifs.initialize(initializationSettings);
+
+          const AndroidNotificationChannel channel = AndroidNotificationChannel(
+            'high_importance_channel',
+            'High Importance Notifications',
+            description: 'This channel is used for important notifications.',
+            importance: Importance.max,
+            playSound: true,
+            enableVibration: true,
+          );
+
+          await localNotifs
+              .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+              ?.createNotificationChannel(channel);
+
+          final rawTitle = data['title']?.toString();
+          final rawBody = data['body']?.toString();
+          String displayTitle = (rawTitle == 'null' ? null : rawTitle) ?? 'New Ride Request';
+          String displayBody = (rawBody == 'null' ? null : rawBody) ?? 'A new ride request is available near you.';
+
+          await localNotifs.show(
+            rideId.hashCode,
+            displayTitle,
+            displayBody,
+            NotificationDetails(
+              android: AndroidNotificationDetails(
+                channel.id,
+                channel.name,
+                channelDescription: channel.description,
+                importance: Importance.max,
+                priority: Priority.high,
+                icon: '@mipmap/launcher_icon',
+                playSound: true,
+                enableVibration: true,
+                fullScreenIntent: true,
+                category: AndroidNotificationCategory.call,
+                actions: <AndroidNotificationAction>[
+                  const AndroidNotificationAction(
+                    'accept_ride',
+                    'Accept',
+                    showsUserInterface: true,
+                    cancelNotification: true,
+                  ),
+                  const AndroidNotificationAction(
+                    'reject_ride',
+                    'Reject',
+                    showsUserInterface: false,
+                    cancelNotification: true,
+                  ),
+                ],
+              ),
+            ),
+            payload: jsonEncode(data),
+          );
+          debugPrint("Background FCM: Custom local notification shown for ride $rideId");
+        } catch (e) {
+          debugPrint("Background FCM: Error showing custom local notification: $e");
+        }
+      }
+    }
+
     if (type == 'ride_cancelled' || type == 'ride_accepted') {
       debugPrint("Background FCM: Skipping storing cancellation/acceptance notification ($type).");
       final rideId = data['rideId']?.toString();
@@ -142,8 +216,8 @@ class NotificationService extends GetxService {
     await _localNotifications.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        // Handle notification tap
-        debugPrint('Notification tapped: ${response.payload}');
+        // Handle notification tap or action button clicks
+        debugPrint('Notification tapped: ${response.payload}, ActionId: ${response.actionId}');
         try {
           if (response.payload != null && response.payload!.isNotEmpty) {
             final data = jsonDecode(response.payload!);
@@ -151,22 +225,34 @@ class NotificationService extends GetxService {
             // ✅ Ensure the tapped notification is saved to list
             _addNotificationToController(data);
 
-            if (data['type'] == 'chat_message') {
-              final rideId = data['rideId'];
-              if (rideId != null) {
-                Get.toNamed('/chat', arguments: {
-                  'rideId': rideId,
-                  'name': data['senderName'],
-                  'profileImage': data['senderImage'],
-                  'otherId': data['senderId'],
-                });
-              }
-            } else if (data['type'] == 'new_ride' || data['type'] == 'ride_cancelled' || data['type'] == 'ride_accepted') {
-              final rideId = (data['rideId'] ?? data['trip_id'])?.toString();
+            final rideId = (data['rideId'] ?? data['trip_id'])?.toString();
+
+            if (response.actionId == 'accept_ride') {
               if (rideId != null && rideId.isNotEmpty) {
-                Future.delayed(const Duration(milliseconds: 500), () {
-                  _handleNewRideTap(rideId);
-                });
+                _acceptRideFromNotification(rideId, data);
+              }
+            } else if (response.actionId == 'reject_ride') {
+              if (rideId != null && rideId.isNotEmpty) {
+                _rejectRideFromNotification(rideId);
+              }
+            } else {
+              // Standard body tap
+              if (data['type'] == 'chat_message') {
+                final chatRideId = data['rideId'];
+                if (chatRideId != null) {
+                  Get.toNamed('/chat', arguments: {
+                    'rideId': chatRideId,
+                    'name': data['senderName'],
+                    'profileImage': data['senderImage'],
+                    'otherId': data['senderId'],
+                  });
+                }
+              } else if (data['type'] == 'new_ride' || data['type'] == 'ride_cancelled' || data['type'] == 'ride_accepted') {
+                if (rideId != null && rideId.isNotEmpty) {
+                  Future.delayed(const Duration(milliseconds: 500), () {
+                    _handleNewRideTap(rideId);
+                  });
+                }
               }
             }
           }
@@ -744,6 +830,46 @@ class NotificationService extends GetxService {
       }
     } catch (e) {
       debugPrint("🔔 [DRIVER] Error in _handleNewRideTap: $e");
+    }
+  }
+
+  Future<void> _acceptRideFromNotification(String rideId, Map<String, dynamic> data) async {
+    try {
+      debugPrint("🔔 [NotificationService] Automatically accepting ride $rideId from notification action button");
+      if (Get.isRegistered<SocketService>()) {
+        final socketSvc = Get.find<SocketService>();
+        socketSvc.isInActiveTrip = true;
+        socketSvc.currentRideRequestId = rideId;
+      }
+      
+      // Make sure any dialog is closed if open
+      if (Get.isDialogOpen == true) {
+        Get.back();
+      }
+
+      // Fetch the latest ride details first to ensure we have the complete data
+      final rideRes = await ApiService.getRide(rideId);
+      final rideData = (!rideRes.containsKey('error')) ? (rideRes['data'] ?? rideRes) : data;
+
+      final ctrl = Get.put(DriverTripController(), permanent: true);
+      ctrl.loadRide(rideData);
+      ctrl.acceptRide(rideId);
+      Get.toNamed(DriverRoutes.afterAcceptLocation);
+    } catch (e) {
+      debugPrint("Error accepting ride from notification: $e");
+    }
+  }
+
+  Future<void> _rejectRideFromNotification(String rideId) async {
+    try {
+      debugPrint("🔔 [NotificationService] Rejecting ride $rideId from notification action button");
+      await ApiService.rejectRide(rideId);
+      await ApiService.addCancelledRideId(rideId);
+      if (Get.isRegistered<SocketService>()) {
+        Get.find<SocketService>().cancelRideRequest(rideId);
+      }
+    } catch (e) {
+      debugPrint("Error rejecting ride from notification: $e");
     }
   }
 }
