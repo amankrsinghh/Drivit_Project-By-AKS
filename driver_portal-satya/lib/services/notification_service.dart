@@ -107,6 +107,9 @@ class NotificationService extends GetxService {
   
   static final Map<String, DateTime> _processedFcmKeys = {};
 
+  // Queued ride request ID from notifications tapped while app was terminated or loading
+  String? pendingRideId;
+
   Future<void> initialize() async {
     // 1. Request Permission (iOS & Android 13+)
     NotificationSettings settings = await _fcm.requestPermission(
@@ -176,9 +179,12 @@ class NotificationService extends GetxService {
                 }
               } else if (data['type'] == 'new_ride' || data['type'] == 'ride_cancelled' || data['type'] == 'ride_accepted') {
                 if (rideId != null && rideId.isNotEmpty) {
-                  Future.delayed(const Duration(milliseconds: 500), () {
+                  if (Get.isRegistered<DriverHomeController>()) {
                     _handleNewRideTap(rideId);
-                  });
+                  } else {
+                    pendingRideId = rideId;
+                    debugPrint("[SOCKET DEBUG] LocalNotif click: Queued pendingRideId: $pendingRideId");
+                  }
                 }
               }
             }
@@ -452,9 +458,12 @@ class NotificationService extends GetxService {
       } else if (message.data['type'] == 'new_ride' || message.data['type'] == 'ride_cancelled' || message.data['type'] == 'ride_accepted') {
         final rideId = (message.data['rideId'] ?? message.data['trip_id'])?.toString();
         if (rideId != null && rideId.isNotEmpty) {
-          Future.delayed(const Duration(milliseconds: 500), () {
+          if (Get.isRegistered<DriverHomeController>()) {
             _handleNewRideTap(rideId);
-          });
+          } else {
+            pendingRideId = rideId;
+            debugPrint("[SOCKET DEBUG] FCM onMessageOpenedApp: Queued pendingRideId: $pendingRideId");
+          }
         }
       }
     });
@@ -487,9 +496,8 @@ class NotificationService extends GetxService {
       } else if (initialMessage.data['type'] == 'new_ride' || initialMessage.data['type'] == 'ride_cancelled' || initialMessage.data['type'] == 'ride_accepted') {
         final rideId = (initialMessage.data['rideId'] ?? initialMessage.data['trip_id'])?.toString();
         if (rideId != null && rideId.isNotEmpty) {
-          Future.delayed(const Duration(seconds: 3), () {
-            _handleNewRideTap(rideId, isTerminated: true);
-          });
+          pendingRideId = rideId;
+          debugPrint("[SOCKET DEBUG] FCM getInitialMessage: Queued pendingRideId from terminated state: $pendingRideId");
         }
       }
     }
@@ -679,7 +687,7 @@ class NotificationService extends GetxService {
     await _localNotifications.cancelAll();
   }
 
-  Future<void> _handleNewRideTap(String rideId, {bool isTerminated = false}) async {
+  Future<void> _handleNewRideTap(String rideId) async {
     try {
       if (!Get.isRegistered<SocketService>()) return;
       final socketSvc = Get.find<SocketService>();
@@ -798,5 +806,9 @@ class NotificationService extends GetxService {
     } catch (e) {
       debugPrint("Error rejecting ride from notification: $e");
     }
+  }
+
+  void processPendingRideTap(String rideId) {
+    _handleNewRideTap(rideId);
   }
 }

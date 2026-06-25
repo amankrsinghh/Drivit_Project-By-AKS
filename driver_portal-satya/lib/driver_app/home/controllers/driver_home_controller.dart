@@ -65,6 +65,25 @@ class DriverHomeController extends GetxController {
     _startActiveTripPolling();
   }
 
+  @override
+  void onReady() {
+    super.onReady();
+    _checkPendingRideNotification();
+  }
+
+  void _checkPendingRideNotification() {
+    if (Get.isRegistered<NotificationService>()) {
+      final ns = Get.find<NotificationService>();
+      if (ns.pendingRideId != null) {
+        final rideId = ns.pendingRideId!;
+        ns.pendingRideId = null; // Clear it to avoid duplicate triggers
+        debugPrint("[SOCKET DEBUG] HomeController onReady: Found pending ride notification for $rideId. Triggering tap handler.");
+        ns.processPendingRideTap(rideId);
+      }
+    }
+  }
+
+
   void _loadCachedProfileStats() {
     final cached = ApiService.cachedProfile;
     if (cached != null) {
