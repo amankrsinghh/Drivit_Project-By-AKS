@@ -234,8 +234,15 @@ class SocketService extends GetxService {
                 final double lat = hc.driverLat.value;
                 final double lng = hc.driverLng.value;
                 if (lat != 0 && lng != 0 && !GeofenceUtil.isInsideChennai(lat, lng)) {
-                  debugPrint("Socket [DRIVER]: Driver is outside Chennai while geofencing was just enabled! Forcing offline.");
-                  hc.forceOffline("Chennai city boundary enforcement has been enabled, and you are outside the service area. You have been taken offline.");
+                  final trip = hc.activeTrip.value;
+                  final bool hasActiveTrip = trip != null && 
+                      ['Accepted', 'Arrived', 'Ongoing'].contains(trip['status']);
+                  if (!hasActiveTrip) {
+                    debugPrint("Socket [DRIVER]: Driver is outside Chennai while geofencing was just enabled! Forcing offline.");
+                    hc.forceOffline("Chennai city boundary enforcement has been enabled, and you are outside the service area. You have been taken offline.");
+                  } else {
+                    debugPrint("Socket [DRIVER]: Geofencing enabled, driver is outside Chennai but on active trip. Bypassing offline.");
+                  }
                 }
               }
             }

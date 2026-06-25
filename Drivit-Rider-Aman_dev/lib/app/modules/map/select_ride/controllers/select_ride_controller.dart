@@ -621,6 +621,7 @@ class SelectRideController extends GetxController {
   final requiredHours = 0.0.obs;
   final carWashCharge = 0.0.obs;
   final rideRequestRadius = 50.0.obs; // Defaults to 50km
+  final outstationMaxRange = 500.0.obs; // Defaults to 500km
   final isCalculatingPrices = false.obs;
   bool _hasShownTimeExceededSnack = false;
 
@@ -816,6 +817,10 @@ class SelectRideController extends GetxController {
       rideRequestRadius.value =
           double.tryParse(settings['ride_request_radius'].toString()) ?? 50.0;
     }
+    if (settings.containsKey('outstation_max_range')) {
+      outstationMaxRange.value =
+          double.tryParse(settings['outstation_max_range'].toString()) ?? 500.0;
+    }
     if (settings.containsKey('car_wash_price')) {
       carWashPriceSetting.value =
           double.tryParse(settings['car_wash_price'].toString()) ?? 150.0;
@@ -906,7 +911,8 @@ class SelectRideController extends GetxController {
       return;
     }
 
-    if (calculatedDistance.value > rideRequestRadius.value) {
+    final double maxRange = isOutstationFlow.value ? outstationMaxRange.value : rideRequestRadius.value;
+    if (calculatedDistance.value > maxRange) {
       Get.snackbar("Service Unavailable", "The selected destination is beyond our serviceable range from your pickup location.",
           snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
       return;
@@ -1129,8 +1135,9 @@ class SelectRideController extends GetxController {
       }
 
       // Range check
-      if (distance > rideRequestRadius.value) {
-        debugPrint("🚕 BN[BAIL]: distance=$distance > rideRequestRadius=${rideRequestRadius.value}");
+      final double maxRange = isOutstationFlow.value ? outstationMaxRange.value : rideRequestRadius.value;
+      if (distance > maxRange) {
+        debugPrint("🚕 BN[BAIL]: distance=$distance > maxRange=$maxRange");
         if (Get.isDialogOpen == true) Get.back();
         Get.snackbar("Service Unavailable", "The selected destination is beyond our serviceable range from your pickup location.",
             snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);

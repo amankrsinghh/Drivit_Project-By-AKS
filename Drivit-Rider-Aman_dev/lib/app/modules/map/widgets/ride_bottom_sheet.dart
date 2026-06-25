@@ -138,8 +138,11 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                               );
                             }),
                             Obx(() {
+                              final double maxRange = controller.isOutstationFlow.value 
+                                  ? controller.outstationMaxRange.value 
+                                  : controller.rideRequestRadius.value;
                               final isOutOfRange = controller.isBothLocationsSelected &&
-                                  controller.calculatedDistance.value > controller.rideRequestRadius.value;
+                                  controller.calculatedDistance.value > maxRange;
                               
                               if (isOutOfRange) {
                                 return _buildNotServiceableCard();
@@ -614,6 +617,9 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
   }
 
   Widget _buildNotServiceableCard() {
+    final double maxRange = controller.isOutstationFlow.value 
+        ? controller.outstationMaxRange.value 
+        : controller.rideRequestRadius.value;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -646,7 +652,7 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "The selected destination is beyond our maximum serviceable range of ${controller.rideRequestRadius.value.toStringAsFixed(0)} km from your pickup location.",
+                  "The selected destination is beyond our maximum serviceable range of ${maxRange.toStringAsFixed(0)} km from your pickup location.",
                   style: const TextStyle(
                     fontSize: 12,
                     color: Color(0xFF7F1D1D),

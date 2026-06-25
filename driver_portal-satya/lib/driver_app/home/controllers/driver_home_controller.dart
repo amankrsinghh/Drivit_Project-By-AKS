@@ -181,13 +181,19 @@ class DriverHomeController extends GetxController {
       driverLat.value = pos.latitude;
       driverLng.value = pos.longitude;
       lastPosition.value = LatLng(pos.latitude, pos.longitude);
-
-      // ✅ Real-time Geofence Enforcement: Force offline if driver leaves Chennai
+      // ✅ Real-time Geofence Enforcement: Force offline if driver leaves Chennai (bypass on active trips)
       if (isOnline.value) {
         final bool geofenceEnabled = ApiService.enableGeofenceBoundary;
         if (geofenceEnabled && !GeofenceUtil.isInsideChennai(pos.latitude, pos.longitude)) {
-          debugPrint("Geofence: Driver moved out of Chennai boundary. Forcing offline.");
-          forceOffline("You have moved outside the Chennai service area. You have been taken offline.");
+          final trip = activeTrip.value;
+          final bool hasActiveTrip = trip != null && 
+              ['Accepted', 'Arrived', 'Ongoing'].contains(trip['status']);
+          if (!hasActiveTrip) {
+            debugPrint("Geofence: Driver moved out of Chennai boundary. Forcing offline.");
+            forceOffline("You have moved outside the Chennai service area. You have been taken offline.");
+          } else {
+            debugPrint("Geofence: Driver is outside Chennai boundary but on active trip. Bypassing offline.");
+          }
         }
       }
     });
