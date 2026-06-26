@@ -493,7 +493,7 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
           }
 
           final selectedType = controller.tripTypesList
-              .firstWhereOrNull((t) => t['name'] == controller.tripType.value);
+              .firstWhereOrNull((t) => t['name'].toString().trim().toLowerCase() == controller.tripType.value.trim().toLowerCase());
           
           if (selectedType == null) {
             return const SizedBox(height: 10);

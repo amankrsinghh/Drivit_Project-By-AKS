@@ -266,6 +266,7 @@ class SelectRideController extends GetxController {
     ever(numberOfDays, (int days) {
       selectedPackage.value = "$days Day${days > 1 ? 's' : ''}";
     });
+    ever(selectedPackage, (_) => calculateTotalPrice());
     ever(tripType, (String val) {
       if (val == "Round Trip") {
         selectedPackage.value = "1 Day";
@@ -639,9 +640,12 @@ class SelectRideController extends GetxController {
   bool _hasShownTimeExceededSnack = false;
 
   int get maxAllowedHours {
+    if (tripType.value == "Round Trip") {
+      return numberOfDays.value * 24;
+    }
     int max = 12;
     final selectedType = tripTypesList.firstWhereOrNull(
-      (t) => t['name'] == tripType.value,
+      (t) => t['name'].toString().trim().toLowerCase() == tripType.value.trim().toLowerCase(),
     );
     if (selectedType != null && selectedType['hourOptions'] != null) {
       List options = selectedType['hourOptions'] as List;
@@ -655,6 +659,9 @@ class SelectRideController extends GetxController {
   void calculateTotalPrice() {
     try {
       isCalculatingPrices.value = true;
+      if (tripType.value == "Round Trip") {
+        isOutstationFlow.value = true;
+      }
     double pLat = pickupLat.value;
     double pLng = pickupLng.value;
     
@@ -662,7 +669,7 @@ class SelectRideController extends GetxController {
     // Coordinates are now only synced via focus-aware listeners in onInit.
 
     final selectedType = tripTypesList.firstWhereOrNull(
-      (t) => t['name'] == tripType.value,
+      (t) => t['name'].toString().trim().toLowerCase() == tripType.value.trim().toLowerCase(),
     );
 
     double dist = 0.0;
@@ -805,7 +812,7 @@ class SelectRideController extends GetxController {
         // set default to first one if compatible or if currently at default
         if (tripTypesList.isNotEmpty) {
           final existingType = tripTypesList.firstWhereOrNull(
-            (t) => t['name'] == tripType.value,
+            (t) => t['name'].toString().trim().toLowerCase() == tripType.value.trim().toLowerCase(),
           );
           if (tripType.value.isEmpty || existingType == null) {
             tripType.value = tripTypesList.first['name'];
