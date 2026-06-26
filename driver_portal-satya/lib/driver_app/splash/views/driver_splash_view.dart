@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../services/notification_service.dart';
 
 class DriverSplashView extends StatefulWidget {
   static String targetRoute = '/driver/login';
@@ -38,8 +39,11 @@ class _DriverSplashViewState extends State<DriverSplashView> with SingleTickerPr
 
     _controller.forward();
 
-    // Stay on splash screen for 3 seconds, then navigate to targetRoute
-    Timer(const Duration(seconds: 3), () {
+    final ns = Get.isRegistered<NotificationService>() ? Get.find<NotificationService>() : null;
+    final hasPending = ns?.pendingRideId != null;
+
+    // Stay on splash screen for 3 seconds, or 300ms if opened from a notification
+    Timer(Duration(milliseconds: hasPending ? 300 : 3000), () {
       Get.offAllNamed(DriverSplashView.targetRoute);
     });
   }

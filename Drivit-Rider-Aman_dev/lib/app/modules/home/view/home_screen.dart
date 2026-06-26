@@ -47,10 +47,13 @@ class HomeView extends GetView<HomeController> {
                 if (ride == null) return const SizedBox.shrink();
                 
                 final rideId = ride['_id']?.toString() ?? '';
+                final status = ride['status']?.toString() ?? '';
                 final bookingId = ride['booking_id']?.toString() ?? "";
                 final String displayId = bookingId.isNotEmpty 
                     ? bookingId 
                     : "RID${(rideId.substring((rideId.length - 8).clamp(0, rideId.length))).toUpperCase()}";
+
+                final isPending = status == 'Pending';
 
                 return TweenAnimationBuilder<double>(
                   tween: Tween<double>(begin: 0.0, end: 1.0),
@@ -96,16 +99,18 @@ class HomeView extends GetView<HomeController> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Text(
-                                        "Active Trip is Live",
-                                        style: TextStyle(
+                                      Text(
+                                        isPending ? "Finding best driver..." : "Active Trip is Live",
+                                        style: const TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.w900,
                                           fontSize: 14,
                                         ),
                                       ),
                                       Text(
-                                        "Booking ID: $displayId • Tap to resume",
+                                        isPending 
+                                            ? "Booking ID: $displayId • Tap to view" 
+                                            : "Booking ID: $displayId • Tap to resume",
                                         style: const TextStyle(
                                           color: Colors.white70,
                                           fontSize: 12,

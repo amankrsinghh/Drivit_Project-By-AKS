@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/services/api_service.dart';
 import '../../../routes/app_routes.dart';
@@ -396,6 +397,21 @@ class HomeController extends GetxController {
           return;
         }
       }
+      
+      // Fallback: Check SharedPreferences active_booking_id for finding stage
+      final prefs = await SharedPreferences.getInstance();
+      final savedId = prefs.getString('active_booking_id');
+      if (savedId != null && savedId.isNotEmpty) {
+        final res = await ApiService.getRideById(savedId);
+        if (!res.containsKey('error')) {
+          final status = res['status']?.toString() ?? '';
+          if (status == 'Pending') {
+            activeRideData.value = res;
+            return;
+          }
+        }
+      }
+      
       activeRideData.value = null;
     } catch (e) {
       debugPrint("Error in refreshActiveRideState: $e");
