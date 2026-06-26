@@ -333,20 +333,23 @@ class NotificationService extends GetxService {
               'type': message.data['type'],
               'data': message.data,
             });
-
-            // Auto-update payment state in TripEarning screen
-            if (message.data['type'] == 'payment_received' || 
-                (notification?.title ?? '').toLowerCase().contains('payment received')) {
-               if (Get.isRegistered<DriverTripController>()) {
-                 Get.find<DriverTripController>().confirmPayment();
-               }
-               if (Get.isRegistered<DriverHomeController>()) {
-                 Get.find<DriverHomeController>().fetchStats();
-               }
-            }
           }
         } catch (e) {
           debugPrint("Error updating home controller notification list: $e");
+        }
+
+        // ✅ PAYMENT RECEIVED — Handle unconditionally (NOT gated behind DriverHomeController)
+        // This must be outside the DriverHomeController guard because the earning screen
+        // is shown INSTEAD of the home page — DriverHomeController may not be registered.
+        if (message.data['type'] == 'payment_received' || 
+            (notification?.title ?? '').toLowerCase().contains('payment received')) {
+          debugPrint("🔔 [DRIVER] payment_received FCM: updating TripEarning screen.");
+          if (Get.isRegistered<DriverTripController>()) {
+            Get.find<DriverTripController>().confirmPayment();
+          }
+          if (Get.isRegistered<DriverHomeController>()) {
+            Get.find<DriverHomeController>().fetchStats();
+          }
         }
 
         // ✅ NEW RIDE REQUEST — Always handle regardless of HomeController state

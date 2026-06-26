@@ -496,8 +496,10 @@ class DriverTripController extends GetxController {
             paymentMode.value = pMethod;
           }
           final pStatus = data['paymentStatus']?.toString();
-          if (pStatus == 'Completed') {
-            isPaymentCollected.value = true;
+          if (pStatus == 'Completed' && !isPaymentCollected.value) {
+            // Use confirmPayment() which sets the flag + shows rating dialog immediately
+            // (instead of waiting up to 4s for the polling timer to do it)
+            confirmPayment();
           }
           if (newStatus?.toLowerCase() == 'cancelled') {
             // If we are already on the Earning screen, just update the ride details
