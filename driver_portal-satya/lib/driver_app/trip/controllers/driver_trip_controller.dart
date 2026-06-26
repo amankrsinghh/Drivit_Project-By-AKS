@@ -480,6 +480,7 @@ class DriverTripController extends GetxController {
       _statusChangedHandler = (data) {
         if (isClosed) return;
         if (data != null && data['_id'].toString() == currentRideId.value) {
+          final oldStatusVal = status.value;
           final newStatus = data['status']?.toString();
           if (newStatus != null) {
             status.value = newStatus;
@@ -493,8 +494,18 @@ class DriverTripController extends GetxController {
             isPaymentCollected.value = true;
           }
           if (newStatus?.toLowerCase() == 'cancelled') {
+            // If we are already on the Earning screen, just update the ride details
+            // (e.g. to show the correct cancellation fee if it changed) and return.
+            if (Get.currentRoute == DriverRoutes.tripEarning) {
+              loadRide(data);
+              return;
+            }
+
+            final wasArrived = oldStatusVal.toLowerCase() == 'arrived';
+            final wasOngoing = oldStatusVal.toLowerCase() == 'tripstarted' || oldStatusVal.toLowerCase() == 'ongoing';
             final fareValue = (data['fare'] as num?)?.toDouble() ?? 0.0;
-            if (fareValue > 0) {
+
+            if ((wasArrived || wasOngoing) && fareValue > 0) {
               loadRide(data);
               goEarning();
             } else {
@@ -863,6 +874,12 @@ class DriverTripController extends GetxController {
     if (Get.isRegistered<SocketService>()) {
       Get.find<SocketService>().clearActiveTrip();
     }
+
+    // Instantly clear the active trip card on home screen
+    if (Get.isRegistered<DriverHomeController>()) {
+      Get.find<DriverHomeController>().activeTrip.value = null;
+    }
+
     Get.offAllNamed(DriverRoutes.home);
 
     if (wasCancelled) {
@@ -898,6 +915,11 @@ class DriverTripController extends GetxController {
       Get.find<SocketService>().clearActiveTrip();
     }
 
+    // Instantly clear the active trip card on home screen
+    if (Get.isRegistered<DriverHomeController>()) {
+      Get.find<DriverHomeController>().activeTrip.value = null;
+    }
+
     // We navigate home first. The binding will ensure DriverHomeController exists.
     Get.offAllNamed(DriverRoutes.home);
     
@@ -905,6 +927,7 @@ class DriverTripController extends GetxController {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (Get.isRegistered<DriverHomeController>()) {
         final h = Get.find<DriverHomeController>();
+        h.activeTrip.value = null;
         h.toggleOnline(true);
         h.setIndex(2);
       }
