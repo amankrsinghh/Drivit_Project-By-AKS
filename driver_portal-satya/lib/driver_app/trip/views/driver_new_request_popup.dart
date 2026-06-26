@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../theme/driver_colors.dart';
 
 class DriverNewRequestPopup extends StatefulWidget {
@@ -35,7 +36,7 @@ class _DriverNewRequestPopupState extends State<DriverNewRequestPopup> {
       if (secondsLeft <= 0) {
         timer.cancel();
         // Silent close: Just dismiss the dialog without sending 'rejected' status
-        if (mounted) Navigator.of(context).pop(); 
+        if (mounted) Get.back(); 
       }
     });
   }

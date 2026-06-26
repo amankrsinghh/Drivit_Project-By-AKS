@@ -159,7 +159,7 @@ class _CustomerRatingDialogState extends State<CustomerRatingDialog> {
         );
       }
       
-      if (mounted) Navigator.of(context).pop(); // Close dialog safely
+      if (mounted) Get.back(); // Close dialog safely
       widget.onComplete();
     } catch (e) {
       Get.snackbar(
@@ -173,7 +173,7 @@ class _CustomerRatingDialogState extends State<CustomerRatingDialog> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('rated_${widget.rideId}', true);
       } catch (_) {}
-      if (mounted) Navigator.of(context).pop(); // Close dialog safely
+      if (mounted) Get.back(); // Close dialog safely
       widget.onComplete();
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -189,10 +189,10 @@ class _CustomerRatingDialogState extends State<CustomerRatingDialog> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('rated_${widget.rideId}', true);
 
-      if (mounted) Navigator.of(context).pop(); // Close dialog safely
+      if (mounted) Get.back(); // Close dialog safely
       widget.onComplete();
     } catch (e) {
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) Get.back();
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
