@@ -140,6 +140,46 @@ class _DriverNotificationViewState extends State<DriverNotificationView> {
                     } else if (type == 'new_ride') {
                       final rideId = payload['rideId']?.toString();
                       if (rideId != null && rideId.isNotEmpty) {
+                        // ── ACTIVE TRIP GUARD ─────────────────────────────────
+                        if (Get.isRegistered<SocketService>()) {
+                          final socketSvc = Get.find<SocketService>();
+                          if (socketSvc.isInActiveTrip) {
+                            Get.snackbar(
+                              "Active Trip In Progress",
+                              "You are currently on a ride. Complete the current trip before accepting new requests.",
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: const Color(0xFF303030),
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 4),
+                              icon: const Icon(Icons.info_outline, color: Colors.orange),
+                            );
+                            return;
+                          }
+                        }
+
+                        if (Get.isRegistered<DriverHomeController>()) {
+                          final hc = Get.find<DriverHomeController>();
+                          final trip = hc.activeTrip.value;
+                          final bool hasLiveActiveTrip = trip != null &&
+                              ['Accepted', 'Arrived', 'Ongoing'].contains(trip['status']?.toString());
+                          if (hasLiveActiveTrip) {
+                            if (Get.isRegistered<SocketService>()) {
+                              Get.find<SocketService>().isInActiveTrip = true; // Sync
+                            }
+                            Get.snackbar(
+                              "Active Trip In Progress",
+                              "You are currently on a ride. Complete the current trip before accepting new requests.",
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: const Color(0xFF303030),
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 4),
+                              icon: const Icon(Icons.info_outline, color: Colors.orange),
+                            );
+                            return;
+                          }
+                        }
+                        // ───────────────────────────────────────────────────────
+
                         Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
                         try {
                           final res = await ApiService.getRide(rideId);

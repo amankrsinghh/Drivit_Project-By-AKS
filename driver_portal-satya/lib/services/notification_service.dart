@@ -712,6 +712,46 @@ class NotificationService extends GetxService {
     try {
       if (!Get.isRegistered<SocketService>()) return;
       final socketSvc = Get.find<SocketService>();
+
+      // ── ACTIVE TRIP GUARD ─────────────────────────────────────────────────
+      // If the driver taps a ride notification while already in an active trip,
+      // we must NOT show the new request popup. Show a friendly message instead.
+      if (socketSvc.isInActiveTrip) {
+        debugPrint("NotificationService: [BLOCKED] Notification tap for $rideId ignored — driver is in an active trip.");
+        Get.snackbar(
+          "Active Trip In Progress",
+          "You are currently on a ride. Complete the current trip before accepting new requests.",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFF303030),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 4),
+          icon: const Icon(Icons.info_outline, color: Colors.orange),
+        );
+        return;
+      }
+
+      // Fallback: also check the live DriverHomeController.activeTrip
+      if (Get.isRegistered<DriverHomeController>()) {
+        final hc = Get.find<DriverHomeController>();
+        final trip = hc.activeTrip.value;
+        final bool hasLiveActiveTrip = trip != null &&
+            ['Accepted', 'Arrived', 'Ongoing'].contains(trip['status']?.toString());
+        if (hasLiveActiveTrip) {
+          socketSvc.isInActiveTrip = true; // Sync flag
+          debugPrint("NotificationService: [BLOCKED] Fallback guard — activeTrip '${trip['status']}' detected. Notification tap blocked.");
+          Get.snackbar(
+            "Active Trip In Progress",
+            "You are currently on a ride. Complete the current trip before accepting new requests.",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: const Color(0xFF303030),
+            colorText: Colors.white,
+            duration: const Duration(seconds: 4),
+            icon: const Icon(Icons.info_outline, color: Colors.orange),
+          );
+          return;
+        }
+      }
+      // ───────────────────────────────────────────────────────────────────────
       
       final rideRes = await ApiService.getRide(rideId);
       if (rideRes.containsKey('error')) {
@@ -792,6 +832,23 @@ class NotificationService extends GetxService {
   Future<void> _acceptRideFromNotification(String rideId, Map<String, dynamic> data) async {
     try {
       debugPrint("🔔 [NotificationService] Automatically accepting ride $rideId from notification action button");
+
+      // ── ACTIVE TRIP GUARD ─────────────────────────────────────────────────
+      // Prevent accepting a new ride from a notification action button while
+      // already on an active trip. This can happen if the driver did not look
+      // at the screen and swiped-to-accept directly from the notification shade.
+      if (Get.isRegistered<SocketService>()) {
+        final socketSvc = Get.find<SocketService>();
+        if (socketSvc.isInActiveTrip) {
+          debugPrint("🔔 [NotificationService] [BLOCKED] Accept action button: driver is in an active trip. Rejecting $rideId.");
+          // Silently reject this ride to release it back to the pool
+          await ApiService.rejectRide(rideId);
+          await ApiService.addCancelledRideId(rideId);
+          return;
+        }
+      }
+      // ───────────────────────────────────────────────────────────────────────
+
       if (Get.isRegistered<SocketService>()) {
         final socketSvc = Get.find<SocketService>();
         socketSvc.isInActiveTrip = true;

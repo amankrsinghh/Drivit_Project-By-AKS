@@ -293,25 +293,47 @@ class SocketService extends GetxService {
   Future<void> showRideRequestDialog(Map<String, dynamic> data, {bool fromFcmClick = false}) async {
     try {
       if (Get.isDialogOpen == true || _isProcessingPopup) {
-        debugPrint("SocketService: Skipping duplicate request/active dialog.");
+        debugPrint("SocketService: [BLOCKED] Popup already open or processing. Skipping request.");
         return;
       }
 
       final rideId = (data['_id'] ?? data['rideId'])?.toString() ?? '';
       if (rideId.isEmpty) return;
 
-      if (currentRideRequestId == rideId) return;
-
-      // Block new requests when driver is already in an active trip
-      if (isInActiveTrip) {
-        debugPrint("SocketService: Driver is currently in a trip. Ignoring ride request $rideId.");
+      if (currentRideRequestId == rideId) {
+        debugPrint("SocketService: [BLOCKED] Duplicate request for ride $rideId already being shown.");
         return;
       }
+
+      // ── ACTIVE TRIP GUARD (Primary) ──────────────────────────────────────────
+      // isInActiveTrip is set to true the moment a driver accepts a ride and
+      // is only cleared when the trip fully ends (payment confirmed / home reached).
+      if (isInActiveTrip) {
+        debugPrint("SocketService: [BLOCKED] isInActiveTrip=true. Driver is in an active trip. Ignoring new ride request $rideId.");
+        return;
+      }
+
+      // ── ACTIVE TRIP GUARD (Secondary / Fallback) ─────────────────────────────
+      // If isInActiveTrip was somehow not set (e.g., app was killed and resumed
+      // mid-trip), we double-check the live DriverHomeController.activeTrip.
+      if (Get.isRegistered<DriverHomeController>()) {
+        final hc = Get.find<DriverHomeController>();
+        final trip = hc.activeTrip.value;
+        final bool hasLiveActiveTrip = trip != null &&
+            ['Accepted', 'Arrived', 'Ongoing'].contains(trip['status']?.toString());
+        if (hasLiveActiveTrip) {
+          // Sync the flag so future checks are handled by the fast path above
+          isInActiveTrip = true;
+          debugPrint("SocketService: [BLOCKED] Fallback guard triggered — activeTrip '${trip['status']}' detected. Setting isInActiveTrip=true. Ignoring request $rideId.");
+          return;
+        }
+      }
+      // ─────────────────────────────────────────────────────────────────────────
 
       if (!fromFcmClick) {
         final cancelledIds = await ApiService.getCancelledRideIds();
         if (cancelledIds.contains(rideId)) {
-          debugPrint("SocketService: Skipping already cancelled/rejected ride $rideId.");
+          debugPrint("SocketService: [BLOCKED] Ride $rideId was already rejected/cancelled by this driver.");
           return;
         }
       }
@@ -335,14 +357,16 @@ class SocketService extends GetxService {
       }
 
       if (!isOnline) {
-        debugPrint("SocketService: Driver is offline. Skipping request $rideId.");
+        debugPrint("SocketService: [BLOCKED] Driver is offline. Skipping request $rideId.");
         return;
       }
 
       if (totalRides >= ApiService.freeRidesCount && walletBalance < 200) {
-        debugPrint("SocketService: Insufficient balance ($walletBalance) for ride $rideId");
+        debugPrint("SocketService: [BLOCKED] Insufficient wallet balance (₹$walletBalance) for ride $rideId.");
         return;
       }
+
+      debugPrint("SocketService: [ALLOWED] Showing ride request popup for $rideId.");
 
       // Lock during dialog presentation
       _isProcessingPopup = true;
@@ -358,12 +382,14 @@ class SocketService extends GetxService {
 
             final isSched = data['isScheduled'] == true || data['isScheduled'] == 'true';
             if (isSched) {
-              // For scheduled rides, we just accept it and remain available for other rides now.
-              // So we DO NOT set isInActiveTrip = true here, otherwise driver gets locked out of normal rides.
-              // Scheduled ride accepted - no snackbar as per request
+              // Scheduled rides: accept silently and remain available for normal rides.
+              // Do NOT set isInActiveTrip = true, otherwise driver gets locked out.
+              debugPrint("SocketService: Scheduled ride $rideId accepted. Staying available for new requests.");
               await ApiService.updateRideStatus(rideId, 'Accepted');
             } else {
-              isInActiveTrip = true; // Mark driver as in active trip immediately
+              // Normal ride: lock the driver into this trip immediately.
+              isInActiveTrip = true;
+              debugPrint("SocketService: Ride $rideId accepted. isInActiveTrip=true. Driver locked from new requests.");
               final ctrl = Get.put(DriverTripController(), permanent: true);
               ctrl.loadRide(data);
               ctrl.acceptRide(rideId);
@@ -375,6 +401,7 @@ class SocketService extends GetxService {
             currentRideRequestId = null;
             if (Get.isDialogOpen == true) Get.back();
             
+            debugPrint("SocketService: Ride $rideId explicitly rejected by driver.");
             // Notify backend of explicit rejection
             await ApiService.rejectRide(rideId);
             await ApiService.addCancelledRideId(rideId);
@@ -392,13 +419,19 @@ class SocketService extends GetxService {
 
   // --- Socket Control Methods ---
 
-  /// Called when driver completes/cancels a trip and returns to home.
-  /// Resets the active trip guard so new ride requests can be shown again.
+  /// Called when driver fully completes/cancels a trip and returns to home.
+  /// Resets ALL active-trip guards so new ride requests can flow again.
   void clearActiveTrip() {
+    if (isInActiveTrip || currentRideRequestId != null || _isProcessingPopup) {
+      debugPrint(
+        "SocketService: clearActiveTrip() — isInActiveTrip: $isInActiveTrip, "
+        "currentRideRequestId: $currentRideRequestId, _isProcessingPopup: $_isProcessingPopup. "
+        "Resetting all flags. Driver is now available for new requests.",
+      );
+    }
     isInActiveTrip = false;
     currentRideRequestId = null;
     _isProcessingPopup = false;
-    debugPrint("SocketService: Active trip cleared. Ready for new requests.");
   }
 
   /// Cancels an active ride request popup and cleans up related concurrency/popup lock flags.

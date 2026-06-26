@@ -297,7 +297,28 @@ class DriverTripController extends GetxController {
 
     currentRideId.value = incomingRideId;
     status.value = ride['status']?.toString() ?? '';
-    
+
+    // ── ACTIVE TRIP GUARD SYNC ────────────────────────────────────────────────
+    // Whenever a trip is loaded into the TripController (whether freshly accepted
+    // or resumed after an app kill), we must arm the SocketService guard so that
+    // incoming new-ride-request events are blocked for the duration of this trip.
+    // Only arm it for truly active statuses — NOT for Completed/Cancelled, which
+    // are already on the Earning screen and handled by their own clearActiveTrip().
+    if (Get.isRegistered<SocketService>()) {
+      final socketSvc = Get.find<SocketService>();
+      final String rideStatus = ride['status']?.toString() ?? '';
+      final bool isActiveTripStatus =
+          ['Accepted', 'Arrived', 'Ongoing', 'TripStarted'].contains(rideStatus);
+      if (isActiveTripStatus && !socketSvc.isInActiveTrip) {
+        socketSvc.isInActiveTrip = true;
+        debugPrint(
+          "DriverTripController.loadRide: isInActiveTrip=true "
+          "(status: $rideStatus, rideId: $incomingRideId)",
+        );
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     // Fix bookingId consistency: prioritize booking_id field, then fallback to RID+last8
     String bId = ride['booking_id']?.toString() ?? "";
     if (bId.isEmpty) {
