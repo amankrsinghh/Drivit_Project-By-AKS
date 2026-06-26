@@ -812,7 +812,11 @@ class FindingDriverController extends GetxController {
         
         if (pStatus == 'Completed') {
           isWaitingForCashConfirmation.value = false;
-          _finishRideFlow();
+          if (newStatus?.toString().toLowerCase() == 'cancelled' || isCancellationPaymentFlow.value) {
+            _finalCleanupAndGoHome();
+          } else {
+            _finishRideFlow();
+          }
           return;
         }
 
@@ -993,9 +997,9 @@ class FindingDriverController extends GetxController {
               final pStatus = ride['paymentStatus'] as String? ?? 'Pending';
               final fareVal = (ride['fare'] as num?)?.toDouble() ?? 0.0;
               if (pStatus == 'Pending' && fareVal > 0) {
-                isCancellationPaymentFlow.value = true;
-                stage.value = BookingStage.tripCompleted;
-                finalFare.value = fareVal;
+                if (!isCancellationPaymentFlow.value) {
+                  _enterCancellationPaymentFlow(fareVal);
+                }
                 
                 try {
                   final settings = await ApiService.getPublicSettings();
@@ -1014,8 +1018,6 @@ class FindingDriverController extends GetxController {
                 carModelRequested.value = ride['carModel']?.toString() ?? '';
                 tripType.value = ride['tripType']?.toString() ?? '';
                 
-                stopAll(); 
-                _clearBookingId();
                 return;
               }
             }
@@ -1337,7 +1339,38 @@ class FindingDriverController extends GetxController {
       finalFare.value = 0;
     }
 
+    _enterCancellationPaymentFlow(finalFare.value);
+  }
+
+  void _enterCancellationPaymentFlow(double fareVal) {
+    isCancellationPaymentFlow.value = true;
     stage.value = BookingStage.tripCompleted;
+    finalFare.value = fareVal;
+
+    // Stop location updates & route/ETA timers
+    _locationUpdateTimer?.cancel();
+    _locationUpdateTimer = null;
+    _routeDebounce?.cancel();
+    _routeDebounce = null;
+    _acceptTimer?.cancel();
+    _acceptTimer = null;
+    _tripStartTimer?.cancel();
+    _tripStartTimer = null;
+    _stopSearchTimer();
+
+    // Clean up unnecessary socket listeners, keeping status change listener
+    if (Get.isRegistered<SocketService>()) {
+      final ss = Get.find<SocketService>();
+      if (_onDriverReached != null) {
+        ss.socket?.off('driver:reached_pickup', _onDriverReached);
+      }
+      if (_onLocationUpdate != null) {
+        ss.socket?.off('ride:location_update', _onLocationUpdate);
+      }
+    }
+
+    // Start payment status polling
+    startPaymentStatusPolling();
   }
 
   Future<void> selectCashPayment() async {
