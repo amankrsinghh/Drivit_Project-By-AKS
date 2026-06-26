@@ -165,6 +165,12 @@ class FindingDriverController extends GetxController {
     distanceCost.value = (args["distanceCost"] as num?)?.toDouble() ?? 0.0;
     hourlyCost.value = (args["hourlyCost"] as num?)?.toDouble() ?? 0.0;
 
+    // Instantly map stage if status is passed via arguments
+    final String? statusArg = (args["status"] ?? Get.parameters["status"])?.toString();
+    if (statusArg != null) {
+      stage.value = _mapStatusToStage(statusArg);
+    }
+
     if (rideId != null) {
       rideDatabaseId.value = rideId.toString();
       _saveBookingId(rideDatabaseId.value);
@@ -298,11 +304,19 @@ class FindingDriverController extends GetxController {
   Future<void> _clearBookingId() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('active_booking_id');
+    await prefs.remove('active_booking_stage');
   }
 
   Future<void> _tryRehydrateOrFetch() async {
     final prefs = await SharedPreferences.getInstance();
     final savedId = prefs.getString('active_booking_id');
+    final savedStageName = prefs.getString('active_booking_stage');
+    if (savedStageName != null) {
+      stage.value = BookingStage.values.firstWhere(
+        (e) => e.name == savedStageName,
+        orElse: () => BookingStage.finding,
+      );
+    }
     if (savedId != null && savedId.isNotEmpty) {
       rideDatabaseId.value = savedId;
       fetchRideDetails(savedId);
@@ -317,11 +331,17 @@ class FindingDriverController extends GetxController {
   void _setupMapWorkers() {
     // We removed 'ever' workers that were snapping camera bounds on every update.
     // Camera updates should now be manual or triggered only on stage transitions.
-    ever(stage, (_) {
+    ever(stage, (newStage) async {
       _boundsFittedOnce = false;
       _boundsFittedForTrip = false;
       _fitBounds();
       _fetchRoutes(); // Ensure polylines are refreshed when stage changes
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('active_booking_stage', newStage.name);
+      } catch (e) {
+        debugPrint("Error saving stage to SharedPreferences: $e");
+      }
     });
   }
 

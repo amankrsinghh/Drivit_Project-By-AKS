@@ -170,7 +170,7 @@ class SocketService extends GetxService {
              if (!isFutureSchedule) {
                  final rideIdStr = (data['_id'] ?? data['id'] ?? data['bookingId'])?.toString();
                  if (rideIdStr != null && rideIdStr.isNotEmpty) {
-                    Get.toNamed(Routes.findingDriver, arguments: { 'rideId': rideIdStr });
+                    Get.toNamed(Routes.findingDriver, arguments: { 'rideId': rideIdStr, 'status': status });
                  }
              }
           }

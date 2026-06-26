@@ -1306,6 +1306,7 @@ class SelectRideController extends GetxController {
             Routes.findingDriver,
             arguments: {
               "rideId": rideId,
+              "status": "Pending",
               "car": selectedCar.value,
               "carModel": selectedCarModel.value,
               "package": selectedPackage.value,

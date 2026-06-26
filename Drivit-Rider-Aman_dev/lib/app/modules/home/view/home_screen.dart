@@ -84,7 +84,10 @@ class HomeView extends GetView<HomeController> {
                           onTap: () {
                             Get.toNamed(
                               Routes.findingDriver,
-                              arguments: {'rideId': rideId},
+                              arguments: {
+                                'rideId': rideId,
+                                'status': status,
+                              },
                             );
                           },
                           borderRadius: BorderRadius.circular(16),

@@ -145,18 +145,36 @@ class _CustomerRatingDialogState extends State<CustomerRatingDialog> {
         rating: _rating.toDouble(),
         comment: _commentController.text,
       );
+      
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('rated_${widget.rideId}', true);
+      
       if (res.containsKey('error')) {
-        // Silent fail or minimal feedback
-      } else {
-        // Save flag locally
+        Get.snackbar(
+          "Error",
+          res['error'] ?? "Failed to submit rating",
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+      }
+      
+      Get.back(); // Close dialog
+      widget.onComplete();
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Something went wrong",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      try {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('rated_${widget.rideId}', true);
-
-        Get.back(); // Close dialog
-        widget.onComplete();
-      }
-    } catch (e) {
-      // ignore
+      } catch (_) {}
+      Get.back(); // Close dialog
+      widget.onComplete();
     } finally {
       setState(() => _isLoading = false);
     }

@@ -147,6 +147,7 @@ class HomeController extends GetxController {
         Routes.findingDriver,
         arguments: {
           'rideId': rideId,
+          'status': status,
           'pickup': pickup,
           'destination': destination,
           'car': carType,
@@ -289,6 +290,7 @@ class HomeController extends GetxController {
             Routes.findingDriver,
             arguments: {
               'rideId': rideId,
+              'status': status,
               'pickup': pickup,
               'destination': destination,
               'car': carType,

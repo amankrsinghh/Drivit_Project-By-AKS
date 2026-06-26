@@ -143,24 +143,30 @@ class _DriverRatingDialogState extends State<DriverRatingDialog> {
         rating: _rating,
         comment: _commentController.text,
       );
+      
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('rated_${widget.ride.rawId}', true);
+      
       if (res.containsKey('error')) {
         NotificationService.to.showLocalNotification(
           title: "Error",
           body: res['error'] ?? "Failed to submit rating",
         );
-      } else {
-        // Save flag locally
+      }
+      
+      Get.back(); // Close dialog
+      widget.onComplete();
+    } catch (e) {
+      NotificationService.to.showLocalNotification(
+        title: "Error",
+        body: "Something went wrong",
+      );
+      try {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('rated_${widget.ride.rawId}', true);
-
-        Get.back(); // Close dialog
-        widget.onComplete();
-      }
-    } catch (e) {
-        NotificationService.to.showLocalNotification(
-          title: "Error",
-          body: "Something went wrong",
-        );
+      } catch (_) {}
+      Get.back(); // Close dialog
+      widget.onComplete();
     } finally {
       setState(() => _isLoading = false);
     }
