@@ -393,6 +393,12 @@ class NotificationService extends GetxService {
           if (rideId != null && rideId.isNotEmpty && Get.isRegistered<SocketService>()) {
             Get.find<SocketService>().cancelRideRequest(rideId);
           }
+          if (rideId != null && rideId.isNotEmpty && Get.isRegistered<DriverHomeController>()) {
+            final hc = Get.find<DriverHomeController>();
+            if (hc.activeTrip.value != null && hc.activeTrip.value!['_id']?.toString() == rideId) {
+              hc.activeTrip.value = null;
+            }
+          }
         }
 
         if (notification != null && !kIsWeb) {

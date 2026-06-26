@@ -116,6 +116,14 @@ class SocketService extends GetxService {
         cancelRideRequest(rideId);
       }
 
+      // Instantly clear the active trip card on home screen
+      if (Get.isRegistered<DriverHomeController>()) {
+        final hc = Get.find<DriverHomeController>();
+        if (hc.activeTrip.value != null && (hc.activeTrip.value!['_id']?.toString() == rideId || rideId.isEmpty)) {
+          hc.activeTrip.value = null;
+        }
+      }
+
       // Also refresh history so the canceled ride shows up correctly in the tabs
       if (Get.isRegistered<DriverHistoryController>()) {
         final hc = Get.find<DriverHistoryController>();
@@ -131,7 +139,16 @@ class SocketService extends GetxService {
         hc.fetchScheduledRides();
       }
       if (Get.isRegistered<DriverHomeController>()) {
-        Get.find<DriverHomeController>().fetchStats();
+        final hc = Get.find<DriverHomeController>();
+        hc.fetchStats();
+        // Instantly clear active trip if status changed to cancelled with 0 fare
+        if (data != null) {
+          final status = data['status']?.toString();
+          final fare = (data['fare'] as num?)?.toDouble() ?? 0.0;
+          if (status?.toLowerCase() == 'cancelled' && fare == 0) {
+            hc.activeTrip.value = null;
+          }
+        }
       }
     });
 
