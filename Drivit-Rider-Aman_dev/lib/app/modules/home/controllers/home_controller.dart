@@ -249,7 +249,7 @@ class HomeController extends GetxController {
         final savedId = prefs.getString('active_booking_id');
         if (savedId != null && savedId.isNotEmpty) {
           final res = await ApiService.getRideById(savedId);
-          if (res != null && !res.containsKey('error')) {
+          if (!res.containsKey('error')) {
             final status = res['status']?.toString() ?? '';
             if (status == 'Pending') {
               activeRide = res;
