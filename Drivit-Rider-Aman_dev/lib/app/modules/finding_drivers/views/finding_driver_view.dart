@@ -54,8 +54,30 @@ class _FindingDriverViewState extends State<FindingDriverView> {
           );
           return;
         }
+        String statusStr = 'Pending';
+        if (controller.stage.value == BookingStage.accepted) {
+          statusStr = 'Accepted';
+        } else if (controller.stage.value == BookingStage.arrived) {
+          statusStr = 'Arrived';
+        } else if (controller.stage.value == BookingStage.tripStarted) {
+          statusStr = 'Ongoing';
+        } else if (controller.stage.value == BookingStage.tripCompleted) {
+          statusStr = 'Completed';
+        }
+
         controller.stopAll();
-        Get.offAllNamed(Routes.home);
+        Get.offAllNamed(
+          Routes.home,
+          arguments: {
+            'activeRide': {
+              '_id': controller.rideDatabaseId.value,
+              'status': statusStr,
+              'booking_id': controller.bookingId.value,
+              'pickupLocation': controller.pickup.value,
+              'dropoffLocation': controller.destination.value,
+            }
+          },
+        );
       },
       child: Scaffold(
         body: Obx(() {

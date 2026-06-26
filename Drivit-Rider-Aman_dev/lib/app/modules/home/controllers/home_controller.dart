@@ -42,6 +42,10 @@ class HomeController extends GetxController {
         final ctrl = Get.isRegistered<MyRideController>() ? Get.find<MyRideController>() : Get.put(MyRideController());
         ctrl.setSegment(args['segment'] as RideSegment);
       }
+
+      if (args['activeRide'] != null) {
+        activeRideData.value = Map<String, dynamic>.from(args['activeRide']);
+      }
     }
     // ✅ Check for unrated rides on app start
     if (Get.isRegistered<MyRideController>()) {
