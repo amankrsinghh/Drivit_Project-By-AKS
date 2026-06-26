@@ -497,8 +497,14 @@ class _AcceptedUI extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Obx(
-                () => Row(
+              Obx(() {
+                if (controller.otp.value.isEmpty) {
+                  return const Text(
+                    "Generating...",
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  );
+                }
+                return Row(
                   children: controller.otp.value
                       .split('')
                       .map(
@@ -523,13 +529,8 @@ class _AcceptedUI extends StatelessWidget {
                         ),
                       )
                       .toList(),
-                ),
-              ),
-              if (controller.otp.value.isEmpty)
-                const Text(
-                  "Generating...",
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
-                ),
+                );
+              }),
               const SizedBox(width: 8),
             ],
           ),
