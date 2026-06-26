@@ -135,7 +135,7 @@ class _DriverBottomSheetState extends State<DriverBottomSheet> {
                         padding: const EdgeInsets.only(bottom: 14),
                         child: Text(
                           (controller.tripType.value == 'Round Trip')
-                              ? "Trip Ongoing (Hourly Package)"
+                              ? "Trip Ongoing (Round Trip)"
                               : (controller.etaToDropoff.value.isNotEmpty
                                   ? (controller.etaToDropoff.value == "0 min"
                                       ? "Arriving at destination..."
@@ -167,7 +167,7 @@ class _DriverBottomSheetState extends State<DriverBottomSheet> {
                                   ? "Review and pay the cancellation charge to the driver"
                                   : (controller.hourlyCost.value > 0 || (controller.hourlyPackage.value.isNotEmpty && controller.hourlyPackage.value != "-")
                                       ? (controller.tripType.value == "Round Trip"
-                                          ? "Review your hourly package fare and make\npayment to the driver"
+                                          ? "Review your round trip fare and make\npayment to the driver"
                                           : "Review your distance + hourly package fare and make\npayment to the driver")
                                       : "Review your distance/time based fare and make\npayment to the driver"),
                               textAlign: TextAlign.center,
@@ -765,7 +765,12 @@ class _TripCompletedUI extends StatelessWidget {
                   ? Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        "Base on ${controller.hourlyPackage.value} package",
+                        "Base on ${() {
+                          final packageVal = controller.hourlyPackage.value;
+                          final hrs = int.tryParse(packageVal.split(" ")[0]) ?? 24;
+                          final days = hrs ~/ 24;
+                          return "$days Day${days > 1 ? 's' : ''}";
+                        }()} trip",
                         style: const TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                     )
@@ -987,14 +992,31 @@ class _TripCompletedUI extends StatelessWidget {
                     () => "₹ ${controller.distanceCost.value.toStringAsFixed(0)}",
                   ),
                 if (controller.hourlyCost.value > 0 || (controller.hourlyPackage.value.isNotEmpty && controller.hourlyPackage.value != "-")) ...[
-                  _KV("Hourly package", () => controller.hourlyPackage.value),
-                  if (controller.extraTimeUsed.value.isNotEmpty && controller.extraTimeUsed.value != "-" && controller.extraTimeUsed.value != "0 min")
-                    _KV("Extra time used", () => controller.extraTimeUsed.value),
-                  _KV("Hourly rate", () => controller.hourlyRate.value),
-                  _KV(
-                    "Hourly Package Cost",
-                    () => "₹ ${controller.hourlyCost.value.toStringAsFixed(0)}",
-                  ),
+                  if (controller.tripType.value == "Round Trip") ...[
+                    _KV("Round Trip Duration", () {
+                      final packageVal = controller.hourlyPackage.value;
+                      final hrs = int.tryParse(packageVal.split(" ")[0]) ?? 24;
+                      final days = hrs ~/ 24;
+                      return "$days Day${days > 1 ? 's' : ''}";
+                    }),
+                    _KV("Daily Rate", () {
+                      final rawRate = double.tryParse(controller.hourlyRate.value.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 150.0;
+                      return "₹ ${(rawRate * 24).toStringAsFixed(0)}/day";
+                    }),
+                    _KV(
+                      "Round Trip Cost",
+                      () => "₹ ${controller.hourlyCost.value.toStringAsFixed(0)}",
+                    ),
+                  ] else ...[
+                    _KV("Hourly package", () => controller.hourlyPackage.value),
+                    if (controller.extraTimeUsed.value.isNotEmpty && controller.extraTimeUsed.value != "-" && controller.extraTimeUsed.value != "0 min")
+                      _KV("Extra time used", () => controller.extraTimeUsed.value),
+                    _KV("Hourly rate", () => controller.hourlyRate.value),
+                    _KV(
+                      "Hourly Package Cost",
+                      () => "₹ ${controller.hourlyCost.value.toStringAsFixed(0)}",
+                    ),
+                  ],
                 ],
                 if (controller.requireCarWash.value)
                   _KV(

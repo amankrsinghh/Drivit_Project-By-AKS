@@ -146,7 +146,7 @@ class _DriverReachDestinationViewState extends State<DriverReachDestinationView>
                                       // Dynamic Text
                                       Obx(() => Text(
                                         (controller.tripType.value == 'Round Trip')
-                                            ? "Trip Ongoing (Hourly Package)"
+                                            ? "Trip Ongoing (Round Trip)"
                                             : (controller.estimatedTime.value == "0 min"
                                                 ? "You are near the destination"
                                                 : "You will reach destination in ${controller.estimatedTime.value}"),

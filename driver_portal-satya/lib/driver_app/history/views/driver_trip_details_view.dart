@@ -384,11 +384,17 @@ class _DriverTripDetailsViewState extends State<DriverTripDetailsView> {
                             if (trip.distanceCost > 0)
                               _kv("Base Fare", "₹ ${trip.distanceCost}"),
                             if (trip.hourlyPackageHours > 0) ...[
-                              _kv("Hourly package", "${trip.hourlyPackageHours} hours"),
-                              _kv("Hourly rate", "₹ ${trip.hourlyRate}/hour"),
-                              if (trip.status == TripStatus.completed || trip.extraTimeUsedMin > 0)
-                                _kv("Extra time used", "${trip.extraTimeUsedMin} min"),
-                              _kv("Hourly Package Cost", "₹ ${trip.hourlyPackageHours * trip.hourlyRate}"),
+                              if (trip.tripType == 'Round Trip') ...[
+                                _kv("Round Trip Duration", "${trip.hourlyPackageHours ~/ 24} Day${(trip.hourlyPackageHours ~/ 24) > 1 ? 's' : ''}"),
+                                _kv("Daily Rate", "₹ ${trip.hourlyRate * 24}/day"),
+                                _kv("Round Trip Cost", "₹ ${trip.hourlyPackageHours * trip.hourlyRate}"),
+                              ] else ...[
+                                _kv("Hourly package", "${trip.hourlyPackageHours} hours"),
+                                _kv("Hourly rate", "₹ ${trip.hourlyRate}/hour"),
+                                if (trip.status == TripStatus.completed || trip.extraTimeUsedMin > 0)
+                                  _kv("Extra time used", "${trip.extraTimeUsedMin} min"),
+                                _kv("Hourly Package Cost", "₹ ${trip.hourlyPackageHours * trip.hourlyRate}"),
+                              ],
                             ],
 
                             if (trip.requireCarWash)

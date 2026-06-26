@@ -176,12 +176,26 @@ class DriverTripEarningView extends StatelessWidget {
                           if (controller.distanceCost.value > 0)
                             _row("Base Fare", "₹ ${controller.distanceCost.value.toStringAsFixed(0)}"),
                           if (controller.hourlyCost.value > 0 || (controller.hourlyPackage.value.isNotEmpty && controller.hourlyPackage.value != "-")) ...[
-                            _row("Hourly Package", controller.hourlyPackage.value),
-                            _row("Hourly Rate", controller.hourlyRate.value),
-                            if (controller.hourlyCost.value > 0)
-                              _row("Package Cost", "₹ ${controller.hourlyCost.value.toStringAsFixed(0)}"),
-                            if (controller.extraTimeUsed.value.isNotEmpty && controller.extraTimeUsed.value != "-" && controller.extraTimeUsed.value != "0 min")
-                              _row("Extra Time Used", controller.extraTimeUsed.value),
+                            if (controller.tripType.value == "Round Trip") ...[
+                              _row("Round Trip Duration", () {
+                                final packageVal = controller.hourlyPackage.value;
+                                final hrs = int.tryParse(packageVal.split(" ")[0]) ?? 24;
+                                final days = hrs ~/ 24;
+                                return "$days Day${days > 1 ? 's' : ''}";
+                              }()),
+                              _row("Daily Rate", () {
+                                final rawRate = double.tryParse(controller.hourlyRate.value.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 150.0;
+                                return "₹ ${(rawRate * 24).toStringAsFixed(0)}/day";
+                              }()),
+                              _row("Round Trip Cost", "₹ ${controller.hourlyCost.value.toStringAsFixed(0)}"),
+                            ] else ...[
+                              _row("Hourly Package", controller.hourlyPackage.value),
+                              _row("Hourly Rate", controller.hourlyRate.value),
+                              if (controller.hourlyCost.value > 0)
+                                _row("Package Cost", "₹ ${controller.hourlyCost.value.toStringAsFixed(0)}"),
+                              if (controller.extraTimeUsed.value.isNotEmpty && controller.extraTimeUsed.value != "-" && controller.extraTimeUsed.value != "0 min")
+                                _row("Extra Time Used", controller.extraTimeUsed.value),
+                            ],
                           ],
                         ]);
                       }),

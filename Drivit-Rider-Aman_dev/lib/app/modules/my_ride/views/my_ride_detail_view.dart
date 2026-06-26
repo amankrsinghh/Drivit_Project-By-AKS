@@ -40,7 +40,8 @@ class MyRideDetailView extends StatelessWidget {
     if (isCompleted) {
       if (item.hourlyPackageHours > 0) {
         if (item.tripType == 'Round Trip') {
-          return "Base on ${item.hourlyPackageHours} hour package";
+          final days = item.hourlyPackageHours ~/ 24;
+          return "Base on $days Day${days > 1 ? 's' : ''} trip";
         }
         return "Base on distance + ${item.hourlyPackageHours} hour package";
       }
@@ -49,7 +50,8 @@ class MyRideDetailView extends StatelessWidget {
     if (item.status == RideStatus.upcoming || item.status == RideStatus.unassigned) {
       if (item.hourlyPackageHours > 0) {
         if (item.tripType == 'Round Trip') {
-          return "Estimated fare based on ${item.hourlyPackageHours} hour package";
+          final days = item.hourlyPackageHours ~/ 24;
+          return "Estimated fare based on $days Day${days > 1 ? 's' : ''} trip";
         }
         return "Estimated fare based on distance + ${item.hourlyPackageHours} hour package";
       }
@@ -579,11 +581,17 @@ class MyRideDetailView extends StatelessWidget {
             if (item.distanceCost > 0)
               _kv("Base Fare", "₹ ${item.distanceCost.toStringAsFixed(0)}"),
             if (item.hourlyPackageHours > 0) ...[
-              _kv("Hourly package", "${item.hourlyPackageHours} hours"),
-              if (isCompleted || item.extraTimeUsedMin > 0)
-                _kv("Extra time used", "${item.extraTimeUsedMin} min"),
-              _kv("Hourly rate", "₹ ${item.hourlyRate.toStringAsFixed(0)}/hour"),
-              _kv("Hourly Package Cost", "₹ ${(item.hourlyPackageHours * item.hourlyRate).toStringAsFixed(0)}"),
+              if (item.tripType == 'Round Trip') ...[
+                _kv("Round Trip Duration", "${item.hourlyPackageHours ~/ 24} Day${(item.hourlyPackageHours ~/ 24) > 1 ? 's' : ''}"),
+                _kv("Daily Rate", "₹ ${(item.hourlyRate * 24).toStringAsFixed(0)}/day"),
+                _kv("Round Trip Cost", "₹ ${(item.hourlyPackageHours * item.hourlyRate).toStringAsFixed(0)}"),
+              ] else ...[
+                _kv("Hourly package", "${item.hourlyPackageHours} hours"),
+                if (isCompleted || item.extraTimeUsedMin > 0)
+                  _kv("Extra time used", "${item.extraTimeUsedMin} min"),
+                _kv("Hourly rate", "₹ ${item.hourlyRate.toStringAsFixed(0)}/hour"),
+                _kv("Hourly Package Cost", "₹ ${(item.hourlyPackageHours * item.hourlyRate).toStringAsFixed(0)}"),
+              ],
             ],
 
             if (item.requireCarWash)
