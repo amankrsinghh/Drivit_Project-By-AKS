@@ -846,7 +846,8 @@ class FindingDriverController extends GetxController {
               .toUpperCase();
           bookingId.value = "RID$last8";
         }
-        if (newStatus == 'Pending' || newStatus?.toString().toLowerCase() == 'cancelled_by_driver') {
+        if ((newStatus == 'Pending' || newStatus?.toString().toLowerCase() == 'cancelled_by_driver') &&
+            stage.value != BookingStage.tripStarted) {
           stage.value = BookingStage.finding;
           driverId.value = "";
           driverName.value = "";
