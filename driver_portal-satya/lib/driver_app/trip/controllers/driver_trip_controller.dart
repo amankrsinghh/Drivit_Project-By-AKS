@@ -280,16 +280,21 @@ class DriverTripController extends GetxController {
 
   /// Load trip data from a ride object (from API or elsewhere)
   void loadRide(Map<String, dynamic> ride) {
+    final incomingRideId = ride['_id']?.toString() ?? '';
+    final isSameRide = incomingRideId == currentRideId.value;
+
     // Reset ALL operational flags for a fresh trip state
     isVerifyingOtp.value = false;
     isStartingTrip.value = false;
     isCompletingRide.value = false;
-    isPaymentCollected.value = false;
+    if (!isSameRide) {
+      isPaymentCollected.value = false;
+      isFeedbackShown.value = false;
+    }
     isUpdating.value = false;
-    isFeedbackShown.value = false;
     _isNavigatingHome = false;
 
-    currentRideId.value = ride['_id']?.toString() ?? '';
+    currentRideId.value = incomingRideId;
     status.value = ride['status']?.toString() ?? '';
     
     // Fix bookingId consistency: prioritize booking_id field, then fallback to RID+last8
