@@ -113,6 +113,7 @@ class DriverTripController extends GetxController {
   final isPaymentCollected = false.obs;
   final isFeedbackShown = false.obs;
   bool _isNavigatingHome = false;
+  bool _cancelledByDriver = false;
   
   StreamSubscription<Position>? _positionStream;
   DateTime? _lastRouteFetchTime;
@@ -887,7 +888,7 @@ class DriverTripController extends GetxController {
 
     Get.offAllNamed(DriverRoutes.home);
 
-    if (wasCancelled) {
+    if (wasCancelled && !_cancelledByDriver) {
       Future.delayed(const Duration(milliseconds: 300), () {
         Get.dialog(
           AlertDialog(
@@ -1088,6 +1089,7 @@ class DriverTripController extends GetxController {
   Future<void> cancelRideByDriver() async {
     if (currentRideId.value.isNotEmpty) {
       isCancelling.value = true;
+      _cancelledByDriver = true;
       try {
         await ApiService.addCancelledRideId(currentRideId.value);
         await _updateRideStatus('cancelled_by_driver');
@@ -1097,6 +1099,7 @@ class DriverTripController extends GetxController {
         }
         goHomeTab();
       } catch (e) {
+        _cancelledByDriver = false;
         Get.snackbar("Error", "Failed to cancel ride: $e");
       } finally {
         isCancelling.value = false;
