@@ -13,6 +13,7 @@ import '../../modules/my_ride/models/ride_items.dart';
 import '../../modules/profile/controllers/profile_controller.dart';
 import '../../routes/app_routes.dart'; // import for Get.toNamed(Routes.findingDriver)
 import '../../modules/home/controllers/home_controller.dart';
+import '../../modules/chat/controller/chat_controller.dart';
 
 class SocketService extends GetxService {
   IO.Socket? socket;
@@ -48,6 +49,19 @@ class SocketService extends GetxService {
       print('Rider Socket connected');
       isConnected.value = true;
       socket?.emit('customer:join', customerId);
+
+      // Re-join active ride room on reconnect if tracking/chat is open
+      String? activeRideId;
+      if (Get.isRegistered<FindingDriverController>()) {
+        activeRideId = Get.find<FindingDriverController>().rideDatabaseId.value;
+      }
+      if ((activeRideId == null || activeRideId.isEmpty) && Get.isRegistered<ChatController>()) {
+        activeRideId = Get.find<ChatController>().rideId;
+      }
+      if (activeRideId != null && activeRideId.isNotEmpty) {
+        socket?.emit('ride:join', activeRideId);
+        debugPrint("Rider Socket: Re-joined ride room ride:$activeRideId on reconnect");
+      }
     });
 
     socket?.onDisconnect((_) {

@@ -438,7 +438,7 @@ class _AcceptedUI extends StatelessWidget {
                 ),
                 child: InkWell(
                   onTap: () {
-                    final rideId = controller.bookingId.value;
+                    final rideId = controller.rideDatabaseId.value;
                     final driverName = controller.driverName.value;
                     final driverId = controller.driverId.value;
                     Get.toNamed(
@@ -620,7 +620,7 @@ class _TripStartedUI extends StatelessWidget {
                 ),
                 child: InkWell(
                   onTap: () {
-                    final rideId = controller.bookingId.value;
+                    final rideId = controller.rideDatabaseId.value;
                     final driverName = controller.driverName.value;
                     final driverId = controller.driverId.value;
                     Get.toNamed(
@@ -1032,7 +1032,7 @@ class _TripCompletedUI extends StatelessWidget {
         const SizedBox(height: 12),
         InkWell(
           onTap: () {
-            final rideId = controller.bookingId.value;
+            final rideId = controller.rideDatabaseId.value;
             final driverName = controller.driverName.value;
             final driverId = controller.driverId.value;
             Get.toNamed(
