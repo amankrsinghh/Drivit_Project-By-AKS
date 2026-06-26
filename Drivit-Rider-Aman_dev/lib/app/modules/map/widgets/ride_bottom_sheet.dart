@@ -23,12 +23,21 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
     if (widget.isKeyboardOpen != oldWidget.isKeyboardOpen &&
         controller.sheetController.isAttached) {
       if (widget.isKeyboardOpen) {
-        // Keyboard open -> move down to minimum
-        controller.sheetController.animateTo(
-          0.3, 
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+        if (controller.travelPlanFocusNode.hasFocus) {
+          // If the travel plan details field is focused, keep/animate sheet to expanded 0.72 snap level
+          controller.sheetController.animateTo(
+            0.72,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        } else {
+          // Keyboard open -> move down to minimum for other flows
+          controller.sheetController.animateTo(
+            0.3, 
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
       } else {
         // Keyboard closed -> return to appropriate "default" position
         // Only return if it's currently at or below the minimum (meaning it was moved by keyboard)
@@ -468,6 +477,7 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                   ),
                   child: TextField(
                     controller: controller.travelPlanController,
+                    focusNode: controller.travelPlanFocusNode,
                     maxLines: 2,
                     style: const TextStyle(fontSize: 14),
                     decoration: const InputDecoration(

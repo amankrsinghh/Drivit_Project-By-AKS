@@ -57,6 +57,7 @@ class SelectRideController extends GetxController {
   final totalPrice = 0.0.obs;
   final numberOfDays = 1.obs;
   final travelPlanController = TextEditingController();
+  final travelPlanFocusNode = FocusNode();
   final tripTypesList = <dynamic>[].obs;
   final isLoadingTripTypes = false.obs;
   final _paymentService = PaymentService();
@@ -203,6 +204,20 @@ class SelectRideController extends GetxController {
     showLocationCardDestination.value = false;
     destinationSuggestions.clear();
     
+    travelPlanFocusNode.addListener(() {
+      if (travelPlanFocusNode.hasFocus) {
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (sheetController.isAttached) {
+            sheetController.animateTo(
+              0.72,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      }
+    });
+
     fetchCarCategories().then((_) => _prefillTransmissionFromProfile());
     fetchTripTypes();
     fetchPricingSettings();
@@ -1695,6 +1710,7 @@ class SelectRideController extends GetxController {
     _paymentService.dispose();
     _destSearchDebounce?.cancel();
     travelPlanController.dispose();
+    travelPlanFocusNode.dispose();
     super.onClose();
   }
 }
