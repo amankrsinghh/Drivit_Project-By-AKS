@@ -241,18 +241,115 @@ class HomeController extends GetxController {
         debugPrint("📍 BOOKNOW: Error fetching settings in navigateToSelectRide: $e");
       }
 
-      final activeRide = await getActiveOrPendingPaymentRide();
-      debugPrint("📍 BOOKNOW [3]: getActiveOrPendingPaymentRide returned → activeRide=${activeRide == null ? 'null' : activeRide['status']}");
+      Map<String, dynamic>? activeRide = await getActiveOrPendingPaymentRide();
+      
+      // Fallback check for Pending status in SharedPreferences
+      if (activeRide == null) {
+        final prefs = await SharedPreferences.getInstance();
+        final savedId = prefs.getString('active_booking_id');
+        if (savedId != null && savedId.isNotEmpty) {
+          final res = await ApiService.getRideById(savedId);
+          if (res != null && !res.containsKey('error')) {
+            final status = res['status']?.toString() ?? '';
+            if (status == 'Pending') {
+              activeRide = res;
+            }
+          }
+        }
+      }
+
+      debugPrint("📍 BOOKNOW [3]: activeRide=${activeRide == null ? 'null' : activeRide['status']}");
 
       if (activeRide != null) {
         final status = activeRide['status']?.toString() ?? '';
         final paymentStatus = activeRide['paymentStatus']?.toString() ?? 'Pending';
+        final rideId = activeRide['_id']?.toString() ?? '';
         debugPrint("📍 BOOKNOW [4]: Active ride found → status=$status, paymentStatus=$paymentStatus");
 
-        if (['Accepted', 'Arrived', 'Ongoing', 'Completed', 'Cancelled'].contains(status) &&
+        if (status == 'Pending') {
+          // Close loader
+          if (Get.isDialogOpen == true) Get.back();
+
+          // Show confirmation dialog to clear pending ride and book a new one
+          final bool? proceed = await Get.dialog<bool>(
+            AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Text(
+                "Active Booking Request",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              content: const Text(
+                "You already have a pending ride request. If you proceed with a new booking, your current ride request will be cancelled. Do you want to cancel the current request and start a new booking?",
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(result: false),
+                  child: const Text("No", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                ),
+                TextButton(
+                  onPressed: () => Get.back(result: true),
+                  child: const Text("Yes, Cancel & Book", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          );
+
+          if (proceed == true) {
+            // Cancel the pending ride
+            Get.dialog(
+              const Center(child: CircularProgressIndicator(color: Colors.orange)),
+              barrierDismissible: false,
+            );
+            try {
+              await ApiService.updateRideStatus(rideId, 'Cancelled', reason: 'User booked another ride');
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove('active_booking_id');
+              
+              // Clear home controller active ride data
+              activeRideData.value = null;
+            } catch (e) {
+              debugPrint("Error cancelling pending ride: $e");
+            }
+            if (Get.isDialogOpen == true) Get.back();
+            // Proceed to get location and navigate to select ride
+          } else {
+            return; // Stop here
+          }
+        } else if (['Accepted', 'Arrived', 'Ongoing'].contains(status)) {
+          // Close loader
+          if (Get.isDialogOpen == true) Get.back();
+
+          // Strictly block and show warning
+          Get.dialog(
+            AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+                  SizedBox(width: 8),
+                  Text(
+                    "Active Ride Live",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ],
+              ),
+              content: const Text(
+                "Your active ride is live. You can book another ride only after the completion of your current ride, or after cancelling it.",
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: const Text("OK", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          );
+          return;
+        } else if (['Completed', 'Cancelled'].contains(status) &&
             !(status == 'Completed' && paymentStatus == 'Completed') &&
             !(status == 'Cancelled' && (paymentStatus == 'Completed' || (activeRide['fare'] as num?)?.toDouble() == 0))) {
-          debugPrint("📍 BOOKNOW [5]: Redirecting to findingDriver (active/pending-payment/unpaid-cancellation ride)");
           // Close loader before showing snackbar or navigating
           if (Get.isDialogOpen == true) Get.back();
 
@@ -260,14 +357,11 @@ class HomeController extends GetxController {
             "Active Ride / Pending Payment",
             status == 'Completed'
                 ? "You have a pending payment for your completed ride. Please complete the payment."
-                : (status == 'Cancelled'
-                    ? "You have an unpaid cancellation fee. Please complete the payment."
-                    : "You have an active ride in progress."),
+                : "You have an unpaid cancellation fee. Please complete the payment.",
             backgroundColor: Colors.redAccent,
             colorText: Colors.white,
           );
 
-          final rideId = activeRide['_id']?.toString() ?? '';
           final pickup = activeRide['pickupLocation']?.toString() ?? '';
           final destination = activeRide['dropoffLocation']?.toString() ?? '';
           final carType = activeRide['carType']?.toString() ?? '';
@@ -304,8 +398,6 @@ class HomeController extends GetxController {
           );
           debugPrint("📍 BOOKNOW [7]: Get.toNamed(findingDriver) called ✅");
           return;
-        } else {
-          debugPrint("📍 BOOKNOW [4b]: Active ride status '$status' does NOT block new booking — proceeding.");
         }
       }
 
