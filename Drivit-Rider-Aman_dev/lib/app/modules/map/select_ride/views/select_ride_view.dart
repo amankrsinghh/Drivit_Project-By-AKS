@@ -294,11 +294,7 @@ class _SelectRideViewState extends State<SelectRideView> {
                                      controller.isPickupFocused.value = false;
                                     controller.showLocationCardPickup.value = false;
                                     mapC.suggestions.clear();
-                                    if (controller.tripType.value != "Round Trip") {
-                                      FocusScope.of(context).requestFocus(controller.destinationFocusNode);
-                                    } else {
-                                      FocusScope.of(context).unfocus();
-                                    }
+                                    FocusScope.of(context).requestFocus(controller.destinationFocusNode);
                                   },
                                 ),
                               ],
@@ -313,11 +309,7 @@ class _SelectRideViewState extends State<SelectRideView> {
                                     controller.isPickupFocused.value = false;
                                     controller.showLocationCardPickup.value = false;
                                     mapC.suggestions.clear();
-                                    if (controller.tripType.value != "Round Trip") {
-                                      FocusScope.of(context).requestFocus(controller.destinationFocusNode);
-                                    } else {
-                                      FocusScope.of(context).unfocus();
-                                    }
+                                     FocusScope.of(context).requestFocus(controller.destinationFocusNode);
                                     
                                     final latLng = mapC.pickedLocation.value;
                                     if (latLng != null) {
@@ -354,9 +346,7 @@ class _SelectRideViewState extends State<SelectRideView> {
                     );
                   }),
                   Obx(
-                    () => controller.tripType.value == "Round Trip"
-                        ? const SizedBox.shrink()
-                        : Column(
+                    () => Column(
                             children: [
                               const SizedBox(height: 10),
                               MapSearchBar(

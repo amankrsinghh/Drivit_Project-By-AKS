@@ -55,6 +55,8 @@ class SelectRideController extends GetxController {
   final selectedPackage = "".obs; // Start empty to avoid default price
   final selectedHourPrice = 0.0.obs;
   final totalPrice = 0.0.obs;
+  final numberOfDays = 1.obs;
+  final travelPlanController = TextEditingController();
   final tripTypesList = <dynamic>[].obs;
   final isLoadingTripTypes = false.obs;
   final _paymentService = PaymentService();
@@ -106,12 +108,9 @@ class SelectRideController extends GetxController {
 
   int _fetchRouteRequestId = 0;
 
+  Future<void> _fetchRouteWithDebounce() async {}
+
   Future<void> fetchRoute() async {
-    if (tripType.value == "Round Trip") {
-      polylines.clear();
-      markers.clear();
-      return;
-    }
     if (isBothLocationsSelected) {
       final start = LatLng(pickupLat.value, pickupLng.value);
       final end = LatLng(dropoffLat.value, dropoffLng.value);
@@ -249,20 +248,15 @@ class SelectRideController extends GetxController {
     
     // Auto-update price when essential parameters change
     ever(selectedCarModel, (_) => updatePriceAndDetailsFromModel());
-    ever(selectedPackage, (_) => calculateTotalPrice());
+    ever(numberOfDays, (int days) {
+      selectedPackage.value = "$days Day${days > 1 ? 's' : ''}";
+    });
     ever(tripType, (String val) {
       if (val == "Round Trip") {
-        if (!isOutstationFlow.value) {
-          destination.value = pickup.value;
-          destinationTextController.text = pickup.value;
-          dropoffLat.value = pickupLat.value;
-          dropoffLng.value = pickupLng.value;
-        }
-        polylines.clear();
-        markers.clear();
-      } else {
-        fetchRoute();
+        selectedPackage.value = "1 Day";
+        numberOfDays.value = 1;
       }
+      fetchRoute();
       calculateTotalPrice();
     });
     ever(requireCarWash, (_) => calculateTotalPrice());
@@ -270,26 +264,17 @@ class SelectRideController extends GetxController {
     // Recalculate billing when coordinates OR address text changes.
     // Address text changes are the definitive signal that a location is "Selected" in the UI.
     ever(pickupLat, (double lat) {
-      if (tripType.value == "Round Trip") {
-        dropoffLat.value = lat;
-      }
       routedDistance.value = 0.0;
       calculateTotalPrice();
     });
     ever(pickupLng, (double lng) {
-      if (tripType.value == "Round Trip") {
-        dropoffLng.value = lng;
-      }
+      // No overrides for Round Trip coordinates
     });
     ever(dropoffLat, (_) {
       routedDistance.value = 0.0;
       calculateTotalPrice();
     });
     ever(pickup, (String val) {
-      if (tripType.value == "Round Trip") {
-        destination.value = val;
-        destinationTextController.text = val;
-      }
       // Only reset if we don't have coordinates yet (e.g. typing)
       if (pickupLat.value == 0) routedDistance.value = 0.0;
       calculateTotalPrice();
@@ -321,10 +306,6 @@ class SelectRideController extends GetxController {
           showLocationCardPickup.value = true; // Show card because user moved map
           pickupLat.value = pos.latitude;
           pickupLng.value = pos.longitude;
-          if (tripType.value == "Round Trip") {
-            dropoffLat.value = pos.latitude;
-            dropoffLng.value = pos.longitude;
-          }
         } else if (isDestinationFocused.value && !isManualTypingDestination.value) {
           showLocationCardDestination.value = true; // Show card because user moved map
           dropoffLat.value = pos.latitude;
@@ -335,10 +316,6 @@ class SelectRideController extends GetxController {
         if (!isPickupFocused.value && !isDestinationFocused.value && pickupLat.value == 0) {
            pickupLat.value = pos.latitude;
            pickupLng.value = pos.longitude;
-           if (tripType.value == "Round Trip") {
-             dropoffLat.value = pos.latitude;
-             dropoffLng.value = pos.longitude;
-           }
         }
       });
       
@@ -1244,6 +1221,7 @@ class SelectRideController extends GetxController {
         package: selectedPackage.value,
         tripType: tripType.value,
         transmission: transmission.value,
+        travelPlanDetails: travelPlanController.text.trim(),
         requireCarWash: requireCarWash.value,
         carWashPrice: carWashPriceSetting.value,
         pickupCoords: pCoords,
@@ -1716,7 +1694,7 @@ class SelectRideController extends GetxController {
     _scheduleWaitTimer?.cancel();
     _paymentService.dispose();
     _destSearchDebounce?.cancel();
-    // Removed manual disposes to prevent "used after disposed" error during re-entry
+    travelPlanController.dispose();
     super.onClose();
   }
 }

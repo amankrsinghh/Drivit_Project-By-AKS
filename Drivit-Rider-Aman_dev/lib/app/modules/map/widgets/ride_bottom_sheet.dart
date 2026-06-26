@@ -390,12 +390,98 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Estimated Usage",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-        ),
+        Obx(() => controller.tripType.value == "Round Trip"
+            ? const Text(
+                "Duration & Itinerary",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              )
+            : const Text(
+                "Estimated Usage",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              )),
         const SizedBox(height: 8),
         Obx(() {
+          if (controller.tripType.value == "Round Trip") {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xffFFF7EE),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Number of Days",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              if (controller.numberOfDays.value > 1) {
+                                controller.numberOfDays.value--;
+                              }
+                            },
+                            icon: const Icon(Icons.remove_circle_outline, color: Colors.orange),
+                          ),
+                          Text(
+                            "${controller.numberOfDays.value} Day${controller.numberOfDays.value > 1 ? 's' : ''}",
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              if (controller.numberOfDays.value < 30) {
+                                controller.numberOfDays.value++;
+                              }
+                            },
+                            icon: const Icon(Icons.add_circle_outline, color: Colors.orange),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Travel Plan Details",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xffFFF7EE),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+                  ),
+                  child: TextField(
+                    controller: controller.travelPlanController,
+                    maxLines: 2,
+                    style: const TextStyle(fontSize: 14),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: "Enter your travel plan (e.g. Chennai -> Pondy -> Chennai)",
+                      hintStyle: TextStyle(color: Colors.grey, fontSize: 12),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+
           final selectedType = controller.tripTypesList
               .firstWhereOrNull((t) => t['name'] == controller.tripType.value);
           
@@ -783,7 +869,9 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                 children: [
                   Expanded(
                     child: Text(
-                      "Time Package (${controller.selectedPackage.value} @ ₹${controller.selectedHourPrice.value.toStringAsFixed(0)}/hr)",
+                      controller.tripType.value == "Round Trip"
+                          ? "Round Trip Package (${controller.selectedPackage.value} @ ₹${(controller.selectedHourPrice.value * 24).toStringAsFixed(0)}/day)"
+                          : "Time Package (${controller.selectedPackage.value} @ ₹${controller.selectedHourPrice.value.toStringAsFixed(0)}/hr)",
                       style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                       softWrap: true,
                     ),
