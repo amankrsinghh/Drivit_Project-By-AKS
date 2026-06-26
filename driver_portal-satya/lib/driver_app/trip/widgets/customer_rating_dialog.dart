@@ -52,17 +52,24 @@ class _CustomerRatingDialogState extends State<CustomerRatingDialog> {
               CircleAvatar(
                 radius: 40,
                 backgroundColor: Colors.grey[200],
-                backgroundImage: widget.customerImage != null && widget.customerImage!.isNotEmpty
+                backgroundImage:
+                    widget.customerImage != null &&
+                        widget.customerImage!.isNotEmpty
                     ? NetworkImage(ApiService.getImageUrl(widget.customerImage))
                     : null,
-                child: widget.customerImage == null || widget.customerImage!.isEmpty
+                child:
+                    widget.customerImage == null ||
+                        widget.customerImage!.isEmpty
                     ? const Icon(Icons.person, size: 40, color: Colors.grey)
                     : null,
               ),
               const SizedBox(height: 10),
               Text(
                 widget.customerName,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 20),
               Row(
@@ -145,10 +152,10 @@ class _CustomerRatingDialogState extends State<CustomerRatingDialog> {
         rating: _rating.toDouble(),
         comment: _commentController.text,
       );
-      
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('rated_${widget.rideId}', true);
-      
+
       if (res.containsKey('error')) {
         Get.snackbar(
           "Error",
@@ -158,7 +165,7 @@ class _CustomerRatingDialogState extends State<CustomerRatingDialog> {
           colorText: Colors.white,
         );
       }
-      
+
       if (mounted) Get.back(); // Close dialog safely
       widget.onComplete();
     } catch (e) {

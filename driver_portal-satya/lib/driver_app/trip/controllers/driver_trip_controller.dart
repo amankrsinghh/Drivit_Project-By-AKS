@@ -119,18 +119,6 @@ class DriverTripController extends GetxController {
   DateTime? _lastRouteFetchTime;
   Position? _lastSentPos;
 
-  @override
-  void onInit() {
-    super.onInit();
-    ever(isPaymentCollected, (bool collected) {
-      if (collected) {
-        debugPrint("DriverTripController: isPaymentCollected is true. Clearing active trip guard.");
-        if (Get.isRegistered<SocketService>()) {
-          Get.find<SocketService>().clearActiveTrip();
-        }
-      }
-    });
-  }
 
   bool get isQuickCheckValid {
     // 1. Clean the car check must be true
@@ -201,6 +189,14 @@ class DriverTripController extends GetxController {
       _fetchAndLoadRide(paramRideId);
     }
     _loadDriverMarker();
+    ever(isPaymentCollected, (bool collected) {
+      if (collected) {
+        debugPrint("DriverTripController: isPaymentCollected is true. Clearing active trip guard.");
+        if (Get.isRegistered<SocketService>()) {
+          Get.find<SocketService>().clearActiveTrip();
+        }
+      }
+    });
   }
 
   @override
