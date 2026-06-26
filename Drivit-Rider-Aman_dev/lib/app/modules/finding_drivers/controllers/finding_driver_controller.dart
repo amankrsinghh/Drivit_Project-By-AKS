@@ -23,6 +23,7 @@ enum BookingStage { finding, accepted, arrived, tripStarted, tripCompleted }
 
 class FindingDriverController extends GetxController {
   final stage = BookingStage.finding.obs;
+  static final Map<String, DateTime> _searchStartTimes = {};
 
   // booking args
   final pickup = "".obs;
@@ -209,8 +210,22 @@ class FindingDriverController extends GetxController {
 
   void _startSearchTimer() {
     _stopSearchTimer();
-    searchCountdown.value = 300;
-    showRetryOption.value = false;
+
+    final id = rideDatabaseId.value;
+    DateTime? startTime = id.isNotEmpty ? _searchStartTimes[id] : null;
+
+    if (startTime != null) {
+      final elapsed = DateTime.now().difference(startTime).inSeconds;
+      final remaining = (300 - elapsed).clamp(0, 300);
+      searchCountdown.value = remaining;
+    } else {
+      searchCountdown.value = 300;
+      if (id.isNotEmpty) {
+        _searchStartTimes[id] = DateTime.now();
+      }
+    }
+
+    showRetryOption.value = searchCountdown.value == 0;
 
     _searchCountdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (isClosing.value || stage.value != BookingStage.finding) {
@@ -232,6 +247,26 @@ class FindingDriverController extends GetxController {
     _searchCountdownTimer = null;
   }
 
+  void _adjustSearchCountdown(DateTime startTime) {
+    if (isClosing.value || stage.value != BookingStage.finding) return;
+
+    final id = rideDatabaseId.value;
+    if (id.isNotEmpty) {
+      _searchStartTimes[id] = startTime;
+    }
+
+    final elapsed = DateTime.now().difference(startTime).inSeconds;
+    final remaining = (300 - elapsed).clamp(0, 300);
+    if (remaining > 0) {
+      searchCountdown.value = remaining;
+      showRetryOption.value = false;
+    } else {
+      searchCountdown.value = 0;
+      showRetryOption.value = true;
+      _stopSearchTimer();
+    }
+  }
+
   void startPaymentStatusPolling() {
     if (_paymentPollTimer != null) return;
     _paymentPollTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
@@ -245,6 +280,9 @@ class FindingDriverController extends GetxController {
   }
 
   void retrySearch() {
+    if (rideDatabaseId.value.isNotEmpty) {
+      _searchStartTimes.remove(rideDatabaseId.value);
+    }
     _startSearchTimer();
     // Re-trigger driver search via socket if needed,
     // but the backend usually keeps searching if not cancelled.
@@ -425,6 +463,14 @@ class FindingDriverController extends GetxController {
           final date = DateTime.parse(ride['createdAt'].toString()).toLocal();
           bookingTime.value =
               "${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
+        }
+
+        final String? rawTime = ride['updatedAt'] ?? ride['createdAt'];
+        if (rawTime != null) {
+          final timeDate = DateTime.parse(rawTime).toLocal();
+          if (stage.value == BookingStage.finding) {
+            _adjustSearchCountdown(timeDate);
+          }
         }
         isScheduled.value = ride['isScheduled'] == true;
         if (ride['scheduledAt'] != null) {
@@ -792,6 +838,10 @@ class FindingDriverController extends GetxController {
           displayDriverLng.value = 0;
           routeToPickup.clear();
           etaToPickup.value = "";
+          
+          if (rideDatabaseId.value.isNotEmpty) {
+            _searchStartTimes.remove(rideDatabaseId.value);
+          }
           _startSearchTimer();
 
           Get.snackbar(
@@ -1060,6 +1110,7 @@ class FindingDriverController extends GetxController {
     if (id != null) {
       rideDatabaseId.value = id.toString();
       await _saveBookingId(rideDatabaseId.value);
+      _searchStartTimes.remove(rideDatabaseId.value);
       _startSearchTimer();
       listenToRideUpdates(id.toString());
     }
