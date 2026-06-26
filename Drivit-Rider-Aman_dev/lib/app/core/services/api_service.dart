@@ -373,6 +373,7 @@ class ApiService {
     String? carNumber,
     String? carType,
     String? transmission,
+    String? fuelType,
   }) async {
     try {
       final response = await http.post(
@@ -387,6 +388,7 @@ class ApiService {
           'carNumber': carNumber,
           'carType': carType,
           'transmission': transmission,
+          'fuelType': fuelType,
         }),
       );
       return _processResponse(response);

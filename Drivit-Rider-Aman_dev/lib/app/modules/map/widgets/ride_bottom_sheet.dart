@@ -200,6 +200,7 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                 icon: Icons.directions_car,
                 value: controller.selectedCarModel.value,
                 items: controller.carModelsList,
+                profileValue: controller.profileCarModel.value,
                 onChanged: (val) => controller.selectedCarModel.value = val!,
               )
             : Row(
@@ -218,6 +219,7 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                       icon: Icons.directions_car,
                       value: controller.selectedCarModel.value,
                       items: controller.carModelsList,
+                      profileValue: controller.profileCarModel.value,
                       onChanged: (val) => controller.selectedCarModel.value = val!,
                     ),
                   ),
@@ -232,7 +234,21 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
     required String value,
     required List<String> items,
     required ValueChanged<String?> onChanged,
+    String? profileValue,
   }) {
+    // Prevent dropdown crash if value is not in the items list
+    final List<String> safeItems = List<String>.from(items);
+    if (value.isNotEmpty && !safeItems.contains(value)) {
+      safeItems.add(value);
+    }
+    if (profileValue != null && profileValue.isNotEmpty && !safeItems.contains(profileValue)) {
+      safeItems.add(profileValue);
+    }
+    // Fallback: If value is empty or not in items after fallback, use the first item if available
+    final String selectedValue = (value.isNotEmpty && safeItems.contains(value))
+        ? value
+        : (safeItems.isNotEmpty ? safeItems.first : "");
+
     return Container(
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -243,10 +259,10 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: value,
+          value: selectedValue.isEmpty ? null : selectedValue,
           isExpanded: true,
           icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
-          items: items.map((e) {
+          items: safeItems.map((e) {
             return DropdownMenuItem(
               value: e,
               child: Row(

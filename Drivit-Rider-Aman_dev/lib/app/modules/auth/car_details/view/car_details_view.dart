@@ -7,7 +7,6 @@ import '../../../../theme/app_text_styles.dart';
 
 import '../../../../widgets/common_text.dart';
 import '../controllers/car_details_controller.dart';
-import '../widgets/car_category_dropdown.dart';
 
 class CarDetailsView extends GetView<CarDetailsController> {
   const CarDetailsView({super.key});
@@ -77,9 +76,82 @@ class CarDetailsView extends GetView<CarDetailsController> {
         ),
         const SizedBox(height: 40),
 
-        _buildFieldLabel("Car Category"),
-        _buildSelectionBox(
-          child: const CarCategoryDropdown(),
+        _buildFieldLabel("Transmission Type"),
+        Obx(() => Row(
+          children: controller.transmissionOptions.map((opt) {
+            final isSelected = controller.transmission.value == opt;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ChoiceChip(
+                  label: Center(child: Text(opt)),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) {
+                      controller.transmission.value = opt;
+                      final cat = controller.carCategories.firstWhereOrNull((c) => c['name'] == opt);
+                      if (cat != null) {
+                        controller.selectedCategory.value = cat;
+                      }
+                    }
+                  },
+                  selectedColor: const Color(0xffFFF3E0),
+                  backgroundColor: Colors.white,
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.orange.shade900 : Colors.black87,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  side: BorderSide(
+                    color: isSelected ? Colors.orange : Colors.grey.shade300,
+                    width: 1.5,
+                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            );
+          }).toList(),
+        )),
+        const SizedBox(height: 20),
+
+        _buildFieldLabel("Vehicle Fuel Type"),
+        Obx(() => Row(
+          children: controller.fuelTypeOptions.map((opt) {
+            final isSelected = controller.fuelType.value == opt;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ChoiceChip(
+                  label: Center(child: Text(opt)),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) {
+                      controller.fuelType.value = opt;
+                    }
+                  },
+                  selectedColor: const Color(0xffFFF3E0),
+                  backgroundColor: Colors.white,
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.orange.shade900 : Colors.black87,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  side: BorderSide(
+                    color: isSelected ? Colors.orange : Colors.grey.shade300,
+                    width: 1.5,
+                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            );
+          }).toList(),
+        )),
+        const SizedBox(height: 20),
+
+        _buildFieldLabel("Car Name / Model"),
+        _buildTextField(
+          controller.carModelController,
+          "Enter your car model (e.g. Swift, Creta)",
         ),
         const SizedBox(height: 20),
 
@@ -129,24 +201,7 @@ class CarDetailsView extends GetView<CarDetailsController> {
     );
   }
 
-  Widget _buildSelectionBox({
-    VoidCallback? onTap,
-    required Widget child,
-    bool hasFixedHeight = true,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        height: hasFixedHeight ? 52 : null,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: const Color(0xffFFF7EE),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: child,
-      ),
-    );
-  }
+
 
   Widget _buildFieldLabel(String label) {
     return Padding(

@@ -25,6 +25,10 @@ class _EditProfileViewState extends State<EditProfileView> {
   late final TextEditingController phoneC;
   late final TextEditingController emailC;
   late final TextEditingController addressC;
+  late final TextEditingController carModelC;
+  late final TextEditingController carNumberC;
+  late String transmissionVal;
+  late String fuelTypeVal;
 
   bool _isEditable = false;
   bool _hasChanges = false;
@@ -34,6 +38,8 @@ class _EditProfileViewState extends State<EditProfileView> {
   String? _phoneError;
   String? _emailError;
   String? _addressError;
+  String? _carModelError;
+  String? _carNumberError;
 
   void _validateAll() {
     setState(() {
@@ -41,6 +47,8 @@ class _EditProfileViewState extends State<EditProfileView> {
       final phone = phoneC.text.trim();
       final email = emailC.text.trim();
       final address = addressC.text.trim();
+      final carModel = carModelC.text.trim();
+      final carNumber = carNumberC.text.trim();
 
       if (name.isEmpty) {
         _nameError = null;
@@ -66,11 +74,27 @@ class _EditProfileViewState extends State<EditProfileView> {
         _addressError = Validators.validateRequired(address, 'Address');
       }
 
+      if (carModel.isEmpty) {
+        _carModelError = null;
+      } else {
+        _carModelError = Validators.validateRequired(carModel, 'Car Name / Model');
+      }
+
+      if (carNumber.isEmpty) {
+        _carNumberError = null;
+      } else {
+        _carNumberError = Validators.validateRequired(carNumber, 'Car Number');
+      }
+
       // Detect if there are actual changes from original
       _hasChanges = name != c.name.value || 
                     phone != c.phone.value || 
                     email != c.email.value || 
                     address != c.address.value ||
+                    carModel != c.carModel.value ||
+                    carNumber != c.carNumber.value ||
+                    transmissionVal != c.transmission.value ||
+                    fuelTypeVal != c.fuelType.value ||
                     c.profileImagePath.value.isNotEmpty;
     });
   }
@@ -80,11 +104,15 @@ class _EditProfileViewState extends State<EditProfileView> {
            _phoneError == null && 
            _emailError == null && 
            _addressError == null &&
+           _carModelError == null &&
+           _carNumberError == null &&
            _hasChanges &&
            nameC.text.trim().isNotEmpty &&
            phoneC.text.trim().isNotEmpty &&
            emailC.text.trim().isNotEmpty &&
-           addressC.text.trim().isNotEmpty;
+           addressC.text.trim().isNotEmpty &&
+           carModelC.text.trim().isNotEmpty &&
+           carNumberC.text.trim().isNotEmpty;
   }
 
   @override
@@ -94,6 +122,10 @@ class _EditProfileViewState extends State<EditProfileView> {
     phoneC = TextEditingController(text: c.phone.value);
     emailC = TextEditingController(text: c.email.value);
     addressC = TextEditingController(text: c.address.value);
+    carModelC = TextEditingController(text: c.carModel.value);
+    carNumberC = TextEditingController(text: c.carNumber.value);
+    transmissionVal = c.transmission.value.isEmpty ? 'Manual' : c.transmission.value;
+    fuelTypeVal = c.fuelType.value.isEmpty ? 'Petrol' : c.fuelType.value;
   }
 
   @override
@@ -102,6 +134,8 @@ class _EditProfileViewState extends State<EditProfileView> {
     phoneC.dispose();
     emailC.dispose();
     addressC.dispose();
+    carModelC.dispose();
+    carNumberC.dispose();
     super.dispose();
   }
 
@@ -154,6 +188,8 @@ class _EditProfileViewState extends State<EditProfileView> {
     final phone = phoneC.text.trim();
     final email = emailC.text.trim();
     final address = addressC.text.trim();
+    final carModel = carModelC.text.trim();
+    final carNumber = carNumberC.text.trim();
 
     setState(() => _isSaving = true);
     final res = await ApiService.updateCustomerProfile(
@@ -162,6 +198,10 @@ class _EditProfileViewState extends State<EditProfileView> {
         'phone': phone,
         'email': email,
         'address': address,
+        'carModel': carModel,
+        'carNumber': carNumber,
+        'transmission': transmissionVal,
+        'fuelType': fuelTypeVal,
       },
       profileImagePath: c.profileImagePath.value,
     );
@@ -349,6 +389,120 @@ class _EditProfileViewState extends State<EditProfileView> {
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             decoration: profileFieldDecoration("123, Jaipur").copyWith(
               errorText: _addressError,
+            ),
+          ),
+
+          const SizedBox(height: 30),
+          const Divider(),
+          const SizedBox(height: 20),
+          const Text(
+            "Vehicle Information",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          _label("Transmission Type"),
+          Row(
+            children: ['Manual', 'Automatic'].map((opt) {
+              final isSelected = transmissionVal == opt;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: ChoiceChip(
+                    label: Center(child: Text(opt)),
+                    selected: isSelected,
+                    onSelected: _isEditable
+                        ? (selected) {
+                            if (selected) {
+                              setState(() {
+                                transmissionVal = opt;
+                                _validateAll();
+                              });
+                            }
+                          }
+                        : null,
+                    selectedColor: const Color(0xffFFF3E0),
+                    backgroundColor: Colors.white,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.orange.shade900 : Colors.black87,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    side: BorderSide(
+                      color: isSelected ? Colors.orange : Colors.grey.shade300,
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+
+          _label("Vehicle Fuel Type"),
+          Row(
+            children: ['Petrol', 'Diesel', 'EV'].map((opt) {
+              final isSelected = fuelTypeVal == opt;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: ChoiceChip(
+                    label: Center(child: Text(opt)),
+                    selected: isSelected,
+                    onSelected: _isEditable
+                        ? (selected) {
+                            if (selected) {
+                              setState(() {
+                                fuelTypeVal = opt;
+                                _validateAll();
+                              });
+                            }
+                          }
+                        : null,
+                    selectedColor: const Color(0xffFFF3E0),
+                    backgroundColor: Colors.white,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.orange.shade900 : Colors.black87,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    side: BorderSide(
+                      color: isSelected ? Colors.orange : Colors.grey.shade300,
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+
+          _label("Car Name / Model"),
+          TextField(
+            controller: carModelC,
+            readOnly: !_isEditable,
+            onChanged: (v) => _validateAll(),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            decoration: profileFieldDecoration("Enter your car model (e.g. Swift)").copyWith(
+              errorText: _carModelError,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          _label("Your Car Number"),
+          TextField(
+            controller: carNumberC,
+            readOnly: !_isEditable,
+            onChanged: (v) => _validateAll(),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            decoration: profileFieldDecoration("Enter your car number").copyWith(
+              errorText: _carNumberError,
             ),
           ),
 

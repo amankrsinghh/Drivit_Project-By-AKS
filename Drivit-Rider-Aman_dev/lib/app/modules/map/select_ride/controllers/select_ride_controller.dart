@@ -44,7 +44,9 @@ class SelectRideController extends GetxController {
   final carModelsList = <String>[].obs;
   final selectedCar = "Manual".obs;
   final selectedCarModel = "".obs;
+  final profileCarModel = "".obs;
   final selectedCarNumber = "".obs;
+  final profileCarNumber = "".obs;
   final selectedCarInfo = "".obs;
   final transmission = "Both".obs;
   final hasProfileTransmission = false.obs;
@@ -502,6 +504,17 @@ class SelectRideController extends GetxController {
       hasProfileTransmission.value = false;
       transmission.value = selectedCar.value;
     }
+
+    final profileCarModelVal = profile['carModel']?.toString();
+    if (profileCarModelVal != null && profileCarModelVal.isNotEmpty) {
+      selectedCarModel.value = profileCarModelVal;
+      profileCarModel.value = profileCarModelVal;
+    }
+    final profileCarNumberVal = profile['carNumber']?.toString();
+    if (profileCarNumberVal != null && profileCarNumberVal.isNotEmpty) {
+      selectedCarNumber.value = profileCarNumberVal;
+      profileCarNumber.value = profileCarNumberVal;
+    }
   }
 
   Future<void> _loadRecentDestinations() async {
@@ -595,17 +608,24 @@ class SelectRideController extends GetxController {
   }
 
   void updatePriceAndDetailsFromModel() {
-    final category = carCategoriesRaw.firstWhereOrNull(
-      (c) => c['name'].toString().trim().toLowerCase() == selectedCar.value.trim().toLowerCase(),
-    );
-    if (category != null && category['cars'] != null) {
-      final List cars = category['cars'] as List;
-      final selectedCarObj = cars.firstWhereOrNull(
-        (c) => c['modelName'].toString().trim() == selectedCarModel.value.trim(),
+    if (profileCarModel.value.isNotEmpty && 
+        selectedCarModel.value.trim().toLowerCase() == profileCarModel.value.trim().toLowerCase()) {
+      selectedCarNumber.value = profileCarNumber.value;
+    } else {
+      final category = carCategoriesRaw.firstWhereOrNull(
+        (c) => c['name'].toString().trim().toLowerCase() == selectedCar.value.trim().toLowerCase(),
       );
-      
-      if (selectedCarObj != null) {
-        selectedCarNumber.value = selectedCarObj['carNumber'] ?? "";
+      if (category != null && category['cars'] != null) {
+        final List cars = category['cars'] as List;
+        final selectedCarObj = cars.firstWhereOrNull(
+          (c) => c['modelName'].toString().trim() == selectedCarModel.value.trim(),
+        );
+        
+        if (selectedCarObj != null) {
+          selectedCarNumber.value = selectedCarObj['carNumber'] ?? "";
+        } else {
+          selectedCarNumber.value = "";
+        }
       } else {
         selectedCarNumber.value = "";
       }

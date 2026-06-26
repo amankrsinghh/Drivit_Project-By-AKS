@@ -14,31 +14,51 @@ class CarDetailsController extends GetxController {
   final isOpen = false.obs;
   final isCategoryOpen = false.obs;
   final selectedType = Rx<String?>(null);
-  final transmission = ''.obs;
+  final transmission = 'Manual'.obs; // Default to Manual
+  final fuelType = 'Petrol'.obs;      // Default to Petrol
   final isLoading = false.obs;
 
   final carCategories = <dynamic>[].obs;
   final selectedCategory = Rx<dynamic>(null);
   final isFormValid = false.obs;
 
+  final transmissionOptions = ['Manual', 'Automatic'];
+  final fuelTypeOptions = ['Petrol', 'Diesel', 'EV'];
+
   @override
   void onInit() {
     super.onInit();
     fetchCategories();
     carNumberController.addListener(_validateForm);
+    carModelController.addListener(_validateForm);
     
     // Also listen to observable changes
-    ever(selectedCategory, (_) => _validateForm());
+    ever(selectedCategory, (cat) {
+      if (cat != null) {
+        transmission.value = cat['name'] ?? 'Manual';
+      }
+      _validateForm();
+    });
+    ever(transmission, (_) => _validateForm());
+    ever(fuelType, (_) => _validateForm());
   }
 
   void _validateForm() {
     isFormValid.value = selectedCategory.value != null &&
-        carNumberController.text.trim().isNotEmpty;
+        carModelController.text.trim().isNotEmpty &&
+        carNumberController.text.trim().isNotEmpty &&
+        transmission.value.isNotEmpty &&
+        fuelType.value.isNotEmpty;
   }
 
   Future<void> fetchCategories() async {
     final categories = await ApiService.getCarCategories();
     carCategories.assignAll(categories);
+    
+    // Auto-select first category if available
+    if (categories.isNotEmpty && selectedCategory.value == null) {
+      selectCategory(categories.first);
+    }
   }
 
   void toggleCategoryDropdown() {
@@ -73,6 +93,13 @@ class CarDetailsController extends GetxController {
       return;
     }
 
+    final modelErr = Validators.validateRequired(carModelController.text, 'Car Model/Name');
+    if (modelErr != null) {
+      Get.snackbar('Error', 'Please enter your car model/name',
+          backgroundColor: Colors.red, colorText: Colors.white);
+      return;
+    }
+
     final numberErr = Validators.validateRequired(carNumberController.text, 'Car Number Plate');
     if (numberErr != null) {
       return;
@@ -80,7 +107,7 @@ class CarDetailsController extends GetxController {
 
     isLoading.value = true;
     
-    // ✅ Fetch data from RegisterController or fallback to persistent storage
+    // Fetch data from RegisterController or fallback to persistent storage
     String name = "";
     String email = "";
     String phone = "";
@@ -113,10 +140,11 @@ class CarDetailsController extends GetxController {
       email: email,
       phone: phone,
       address: address,
-      carModel: selectedCategory.value['name'],
+      carModel: carModelController.text.trim(),
       carNumber: carNumberController.text.trim(),
       carType: selectedCategory.value['name'],
-      transmission: selectedCategory.value != null ? selectedCategory.value['name'] : 'Both',
+      transmission: transmission.value,
+      fuelType: fuelType.value,
     );
     isLoading.value = false;
 

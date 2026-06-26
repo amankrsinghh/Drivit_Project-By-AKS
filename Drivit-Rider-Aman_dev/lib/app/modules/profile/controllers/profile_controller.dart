@@ -9,6 +9,10 @@ class ProfileController extends GetxController {
   final address = "".obs;
   final avgRating = 0.0.obs;
   final displayId = "".obs;
+  final carModel = "".obs;
+  final carNumber = "".obs;
+  final transmission = "Manual".obs;
+  final fuelType = "Petrol".obs;
 
   final isLoading = false.obs;
 
@@ -45,6 +49,10 @@ class ProfileController extends GetxController {
     email.value = data['email'] ?? '';
     address.value = data['address'] ?? '';
     displayId.value = data['displayId'] ?? '';
+    carModel.value = data['carModel'] ?? '';
+    carNumber.value = data['carNumber'] ?? '';
+    transmission.value = data['transmission'] ?? 'Manual';
+    fuelType.value = data['fuelType'] ?? 'Petrol';
     
     final double ratingVal = (data['rating'] ?? 0.0).toDouble();
     if (ratingVal > 0) {
