@@ -356,7 +356,19 @@ class NotificationService extends GetxService {
           debugPrint("🔔 [DRIVER] New ride FCM received! rideId=$rideId");
           if (rideId != null && rideId.isNotEmpty && Get.isRegistered<SocketService>()) {
             final socketSvc = Get.find<SocketService>();
-            // Fetch the full ride data from backend, then show dialog
+
+            // ✅ OPTIMIZATION: If the socket is connected, skip the API fetch entirely.
+            // The socket already delivers the full ride payload via 'ride:new_request'
+            // with zero delay. Fetching from the API here adds unnecessary latency
+            // (500ms–2s) and can cause a duplicate popup attempt.
+            // Only use FCM as a fallback when socket is disconnected.
+            if (socketSvc.isConnected.value) {
+              debugPrint("🔔 [DRIVER] Socket is connected — skipping FCM-triggered API fetch for $rideId. Socket already delivered the popup.");
+              return;
+            }
+
+            debugPrint("🔔 [DRIVER] Socket is disconnected — FCM fallback: fetching ride $rideId from API.");
+            // Fetch the full ride data from backend, then show dialog (socket-offline fallback only)
             ApiService.getRide(rideId).then((rideRes) async {
               if (!rideRes.containsKey('error')) {
                 final rideData = rideRes['data'] ?? rideRes;
@@ -372,7 +384,7 @@ class NotificationService extends GetxService {
                 // Show dialog for pending, upcoming, or scheduled rides
                 if (isAllowed && (status == 'pending' || status == 'upcoming' || 
                     rideData['isScheduled'] == true || rideData['isScheduled'] == 'true')) {
-                  debugPrint("🔔 [DRIVER] Showing ride request dialog for $rideId (status=$status)");
+                  debugPrint("🔔 [DRIVER] FCM fallback: Showing ride request dialog for $rideId (status=$status)");
                   socketSvc.showRideRequestDialog(rideData);
                 } else {
                   debugPrint("🔔 [DRIVER] Ride $rideId status '$status' or transmission '$rideTransmission' vs '$driverTransmission' not eligible for dialog.");
