@@ -139,7 +139,7 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                                     _buildTripTypeSelection(),
                                     const SizedBox(height: 12),
                                   ],
-                                  if (controller.isOutstationFlow.value) ...[
+                                  if (!controller.isAirportFlow.value) ...[
                                     _buildPackageSelection(),
                                     const SizedBox(height: 12),
                                   ],
@@ -1444,7 +1444,7 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               children: [
-                                if (isOutstation && controller.selectedHourPrice.value > 0)
+                                if ((isOutstation || controller.selectedPackage.value.isNotEmpty) && controller.selectedHourPrice.value > 0)
                                   Container(
                                     width: 140,
                                     margin: const EdgeInsets.only(right: 10),

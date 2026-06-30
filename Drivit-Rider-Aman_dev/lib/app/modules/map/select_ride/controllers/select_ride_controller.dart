@@ -712,7 +712,7 @@ class SelectRideController extends GetxController {
       distanceCost.value = (dist * basePricePerKm.value * multiplier).roundToDouble();
 
       double hours = 0.0;
-      if (isAirportFlow.value || !isOutstationFlow.value) {
+      if (isAirportFlow.value) {
         selectedPackage.value = "";
         hours = 0.0;
       } else {
@@ -1000,7 +1000,7 @@ class SelectRideController extends GetxController {
     }
     
     // Airport flow does not require a package. Local and Outstation (One Way and Round Trip) require a package.
-    final bool doesNotRequirePackage = isAirportFlow.value || !isOutstationFlow.value;
+    final bool doesNotRequirePackage = isAirportFlow.value;
     if (!doesNotRequirePackage && selectedPackage.value.isEmpty) {
       Get.snackbar("Package Required", "Please select estimated usage hours.",
           snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
@@ -1123,7 +1123,7 @@ class SelectRideController extends GetxController {
       return;
     }
 
-    final bool doesNotRequirePackage = isAirportFlow.value || !isOutstationFlow.value;
+    final bool doesNotRequirePackage = isAirportFlow.value;
     if (!doesNotRequirePackage && selectedPackage.value.isEmpty) {
       debugPrint("🚕 BN[BAIL]: package required but empty. tripType=${tripType.value}");
       return;
