@@ -910,14 +910,14 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
               const SizedBox(height: 8),
             ],
 
-            // Outstation One Way Return Charges
-            if (controller.isOutstationFlow.value && controller.tripType.value == "One Way" && controller.returnCharge.value > 0) ...[
+            // Return Charges
+            if (controller.returnCharge.value > 0) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
-                      "Return Charges (${controller.calculatedDistance.value.toStringAsFixed(1)} km @ ₹${controller.outstationReturnChargeRate.value.toStringAsFixed(0)}/km)",
+                      "Return Charges (${controller.calculatedDistance.value.toStringAsFixed(1)} km @ ₹${(controller.isOutstationFlow.value ? (controller.tripType.value == "One Way" ? controller.outstationReturnChargeRate.value : controller.outstationRoundReturnChargeRate.value) : controller.localReturnChargeRate.value).toStringAsFixed(0)}/km)",
                       style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                       softWrap: true,
                     ),
