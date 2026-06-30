@@ -31,6 +31,8 @@ import '../modules/chat/view/chat_view.dart';
 import '../modules/tariffs/bindings/tariffs_binding.dart';
 import '../modules/tariffs/views/tariffs_view.dart';
 import '../modules/splash/views/splash_view.dart';
+import '../modules/car_clinic/bindings/car_clinic_binding.dart';
+import '../modules/car_clinic/views/car_clinic_view.dart';
 
 import 'app_routes.dart';
 
@@ -130,6 +132,12 @@ class AppPages {
       name: Routes.tariffs,
       page: () => const TariffsView(),
       binding: TariffsBinding(),
+      middlewares: _auth,
+    ),
+    GetPage(
+      name: Routes.CAR_CLINIC,
+      page: () => const CarClinicView(),
+      binding: CarClinicBinding(),
       middlewares: _auth,
     ),
   ];

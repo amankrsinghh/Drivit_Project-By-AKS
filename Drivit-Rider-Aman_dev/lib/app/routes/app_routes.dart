@@ -15,4 +15,5 @@ abstract class Routes {
   static const notifications = '/notifications';
   static const rideOtp = '/ride-otp';
   static const tariffs = '/tariffs';
+  static const CAR_CLINIC = '/car-clinic';
 }

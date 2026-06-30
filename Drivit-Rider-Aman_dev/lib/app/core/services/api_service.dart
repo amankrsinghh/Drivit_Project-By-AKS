@@ -996,6 +996,74 @@ class ApiService {
     }
   }
 
+  // ─── Car Clinic ──────────────────────────────────────────────────────────
+  static Future<List<dynamic>> getClinicServices() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/car-clinic/services'),
+        headers: await _authHeaders(),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching clinic services: $e');
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>> bookClinicService({
+    required String serviceId,
+    required String pickupLocation,
+    required Map<String, double> pickupCoords,
+    required String scheduledAt,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/car-clinic/bookings'),
+        headers: await _authHeaders(),
+        body: jsonEncode({
+          'serviceId': serviceId,
+          'pickupLocation': pickupLocation,
+          'pickupCoords': pickupCoords,
+          'scheduledAt': scheduledAt,
+        }),
+      );
+      return _processResponse(response);
+    } catch (e) {
+      return {'error': e.toString()};
+    }
+  }
+
+  static Future<List<dynamic>> getMyClinicBookings() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/car-clinic/bookings/my'),
+        headers: await _authHeaders(),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching clinic bookings: $e');
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>> cancelClinicBooking(String bookingId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/car-clinic/bookings/$bookingId/cancel'),
+        headers: await _authHeaders(),
+      );
+      return _processResponse(response);
+    } catch (e) {
+      return {'error': e.toString()};
+    }
+  }
+
   // ─── Payments (Razorpay) ──────────────────────────────────────────────────
 
   static Future<Map<String, dynamic>> getRazorpayKey() async {

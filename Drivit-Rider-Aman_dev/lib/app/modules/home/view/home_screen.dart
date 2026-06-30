@@ -231,6 +231,15 @@ class _HomeTab extends GetView<HomeController> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 15),
+                      _buildFullWidthServiceCard(
+                        title: "Car Clinic",
+                        subtitle: "Mechanical support, water wash, puncture & detailing",
+                        icon: Icons.build_circle_rounded,
+                        iconColor: const Color(0xff009688),
+                        iconBgColor: const Color(0xffE0F2F1),
+                        onTap: () => Get.toNamed(Routes.CAR_CLINIC),
+                      ),
                       const SizedBox(height: 30),
                       // Existing view tariffs & fares card preserved below the grid
                       GestureDetector(
@@ -486,6 +495,77 @@ class _HomeTab extends GetView<HomeController> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFullWidthServiceCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xffF3F4F6)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 26),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      height: 1.25,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey.shade400, size: 16),
+          ],
         ),
       ),
     );
