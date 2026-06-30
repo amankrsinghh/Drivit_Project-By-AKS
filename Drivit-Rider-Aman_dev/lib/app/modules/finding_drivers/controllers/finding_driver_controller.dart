@@ -108,6 +108,8 @@ class FindingDriverController extends GetxController {
   final distanceCost = 0.0.obs;
   final hourlyCost = 0.0.obs;
   final returnCharge = 0.0.obs;
+  final platformCharge = 0.0.obs;
+  final gst = 0.0.obs;
 
   // safety
   final isClosing = false.obs;
@@ -166,6 +168,8 @@ class FindingDriverController extends GetxController {
     distanceCost.value = (args["distanceCost"] as num?)?.toDouble() ?? 0.0;
     hourlyCost.value = (args["hourlyCost"] as num?)?.toDouble() ?? 0.0;
     returnCharge.value = (args["returnCharge"] as num?)?.toDouble() ?? 0.0;
+    platformCharge.value = (args["platformCharge"] as num?)?.toDouble() ?? 0.0;
+    gst.value = (args["gst"] as num?)?.toDouble() ?? 0.0;
 
     // Instantly map stage if status is passed via arguments
     final String? statusArg = (args["status"] ?? Get.parameters["status"])?.toString();
@@ -480,6 +484,8 @@ class FindingDriverController extends GetxController {
         distanceCost.value = (ride['distanceCost'] as num?)?.toDouble() ?? 0.0;
         hourlyCost.value = (ride['hourlyCost'] as num?)?.toDouble() ?? 0.0;
         returnCharge.value = (ride['returnCharge'] as num?)?.toDouble() ?? 0.0;
+        platformCharge.value = (ride['platformCharge'] as num?)?.toDouble() ?? 0.0;
+        gst.value = (ride['gst'] as num?)?.toDouble() ?? 0.0;
 
         // Format times
         if (ride['createdAt'] != null) {

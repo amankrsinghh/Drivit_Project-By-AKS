@@ -1028,6 +1028,16 @@ class _TripCompletedUI extends StatelessWidget {
                     "Car Wash",
                     () => "₹ ${controller.carWashPrice.value.toStringAsFixed(0)}",
                   ),
+                if (controller.platformCharge.value > 0)
+                  _KV(
+                    "Platform Charge",
+                    () => "₹ ${controller.platformCharge.value.toStringAsFixed(0)}",
+                  ),
+                if (controller.gst.value > 0)
+                  _KV(
+                    "GST",
+                    () => "₹ ${controller.gst.value.toStringAsFixed(0)}",
+                  ),
               ],
             );
           }
