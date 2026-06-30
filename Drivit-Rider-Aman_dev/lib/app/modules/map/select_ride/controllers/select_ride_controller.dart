@@ -54,6 +54,7 @@ class SelectRideController extends GetxController {
   final isOutstationFlow = false.obs;
   final selectedPackage = "".obs; // Start empty to avoid default price
   final selectedHourPrice = 0.0.obs;
+  final selectedDayPrice = 0.0.obs;
   final totalPrice = 0.0.obs;
   final numberOfDays = 1.obs;
   final travelPlanController = TextEditingController();
@@ -729,6 +730,7 @@ class SelectRideController extends GetxController {
 
     if (selectedType != null) {
       selectedHourPrice.value = (selectedType['pricePerHour'] ?? 0.0).toDouble();
+      selectedDayPrice.value = (selectedType['pricePerDay'] ?? 0.0).toDouble();
       
       double multiplier = 1.0;
       if (selectedCarModel.value.toLowerCase().contains("sedan")) multiplier = 1.2;
@@ -772,7 +774,15 @@ class SelectRideController extends GetxController {
         }
       }
 
-      hourlyCost.value = hours * selectedHourPrice.value;
+      if (tripType.value == "Round Trip") {
+        if (outstationRoundUseEstimatedHours.value) {
+          hourlyCost.value = hours * selectedHourPrice.value;
+        } else {
+          hourlyCost.value = (hours / 24) * selectedDayPrice.value;
+        }
+      } else {
+        hourlyCost.value = hours * selectedHourPrice.value;
+      }
       
       double returnChg = 0.0;
       if (isOutstationFlow.value) {
