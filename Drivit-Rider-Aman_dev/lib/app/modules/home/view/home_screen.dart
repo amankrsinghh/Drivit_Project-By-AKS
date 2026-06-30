@@ -215,7 +215,7 @@ class _HomeTab extends GetView<HomeController> {
                             iconColor: const Color(0xffF38900),
                             iconBgColor: const Color(0xffFFF3E0),
                             onTap: () => controller.navigateToSelectRide(
-                              arguments: {'tripType': 'One Way'},
+                              arguments: {'tripType': 'Local'},
                             ),
                           ),
                           const SizedBox(width: 15),

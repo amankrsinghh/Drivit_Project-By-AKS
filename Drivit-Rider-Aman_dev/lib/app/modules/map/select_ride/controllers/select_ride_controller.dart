@@ -875,11 +875,13 @@ class SelectRideController extends GetxController {
         tripTypesList.value = types;
         // set default to first one if compatible or if currently at default
         if (tripTypesList.isNotEmpty) {
+          final defaultName = isOutstationFlow.value ? "One Way" : "Local";
           final existingType = tripTypesList.firstWhereOrNull(
             (t) => t['name'].toString().trim().toLowerCase() == tripType.value.trim().toLowerCase(),
           );
-          if (tripType.value.isEmpty || existingType == null) {
-            tripType.value = tripTypesList.first['name'];
+          if (tripType.value.isEmpty || existingType == null || (isOutstationFlow.value && tripType.value == "Local") || (!isOutstationFlow.value && tripType.value != "Local")) {
+            final target = tripTypesList.firstWhereOrNull((t) => t['name'].toString().trim().toLowerCase() == defaultName.toLowerCase());
+            tripType.value = target != null ? target['name'] : tripTypesList.first['name'];
           }
         }
       }

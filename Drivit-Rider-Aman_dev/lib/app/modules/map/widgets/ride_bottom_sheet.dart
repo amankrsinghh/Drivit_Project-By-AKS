@@ -318,8 +318,17 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
             );
           }
 
+          final filteredList = controller.tripTypesList.where((type) {
+            final name = type['name'].toString().trim().toLowerCase();
+            if (controller.isOutstationFlow.value) {
+              return name == 'one way' || name == 'round trip';
+            } else {
+              return name == 'local';
+            }
+          }).toList();
+
           return Row(
-            children: controller.tripTypesList.map((type) {
+            children: filteredList.map((type) {
               final name = type['name'];
               final desc = type['description'] ?? "";
 
