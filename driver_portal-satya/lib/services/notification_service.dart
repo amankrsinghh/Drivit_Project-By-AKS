@@ -129,7 +129,7 @@ class NotificationService extends GetxService {
 
     // ✅ NEW: Disable FCM heads-up in foreground to prevent duplicate banners
     await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-      alert: false,
+      alert: true,
       badge: true,
       sound: true,
     );
@@ -362,42 +362,40 @@ class NotificationService extends GetxService {
 
             // ✅ OPTIMIZATION: If the socket is connected, skip the API fetch entirely.
             // The socket already delivers the full ride payload via 'ride:new_request'
-            // with zero delay. Fetching from the API here adds unnecessary latency
-            // (500ms–2s) and can cause a duplicate popup attempt.
+            // with zero delay. Fetching from the API here adds unnecessary latency.
             // Only use FCM as a fallback when socket is disconnected.
             if (socketSvc.isConnected.value) {
               debugPrint("🔔 [DRIVER] Socket is connected — skipping FCM-triggered API fetch for $rideId. Socket already delivered the popup.");
-              return;
-            }
-
-            debugPrint("🔔 [DRIVER] Socket is disconnected — FCM fallback: fetching ride $rideId from API.");
-            // Fetch the full ride data from backend, then show dialog (socket-offline fallback only)
-            ApiService.getRide(rideId).then((rideRes) async {
-              if (!rideRes.containsKey('error')) {
-                final rideData = rideRes['data'] ?? rideRes;
-                final status = (rideData['status'] ?? '').toString().toLowerCase();
-                
-                // Verify transmission type
-                final profile = await ApiService.getCachedDriverProfile();
-                final driverTransmission = (profile?['transmissionType'] ?? 'Both').toString().toLowerCase();
-                final rideTransmission = (rideData['transmission'] ?? 'manual').toString().toLowerCase();
-                
-                bool isAllowed = driverTransmission == 'both' || driverTransmission == rideTransmission;
-                
-                // Show dialog for pending, upcoming, or scheduled rides
-                if (isAllowed && (status == 'pending' || status == 'upcoming' || 
-                    rideData['isScheduled'] == true || rideData['isScheduled'] == 'true')) {
-                  debugPrint("🔔 [DRIVER] FCM fallback: Showing ride request dialog for $rideId (status=$status)");
-                  socketSvc.showRideRequestDialog(rideData);
+            } else {
+              debugPrint("🔔 [DRIVER] Socket is disconnected — FCM fallback: fetching ride $rideId from API.");
+              // Fetch the full ride data from backend, then show dialog (socket-offline fallback only)
+              ApiService.getRide(rideId).then((rideRes) async {
+                if (!rideRes.containsKey('error')) {
+                  final rideData = rideRes['data'] ?? rideRes;
+                  final status = (rideData['status'] ?? '').toString().toLowerCase();
+                  
+                  // Verify transmission type
+                  final profile = await ApiService.getCachedDriverProfile();
+                  final driverTransmission = (profile?['transmissionType'] ?? 'Both').toString().toLowerCase();
+                  final rideTransmission = (rideData['transmission'] ?? 'manual').toString().toLowerCase();
+                  
+                  bool isAllowed = driverTransmission == 'both' || driverTransmission == rideTransmission;
+                  
+                  // Show dialog for pending, upcoming, or scheduled rides
+                  if (isAllowed && (status == 'pending' || status == 'upcoming' || 
+                      rideData['isScheduled'] == true || rideData['isScheduled'] == 'true')) {
+                    debugPrint("🔔 [DRIVER] FCM fallback: Showing ride request dialog for $rideId (status=$status)");
+                    socketSvc.showRideRequestDialog(rideData);
+                  } else {
+                    debugPrint("🔔 [DRIVER] Ride $rideId status '$status' or transmission '$rideTransmission' vs '$driverTransmission' not eligible for dialog.");
+                  }
                 } else {
-                  debugPrint("🔔 [DRIVER] Ride $rideId status '$status' or transmission '$rideTransmission' vs '$driverTransmission' not eligible for dialog.");
+                  debugPrint("🔔 [DRIVER] Failed to fetch ride $rideId: $rideRes");
                 }
-              } else {
-                debugPrint("🔔 [DRIVER] Failed to fetch ride $rideId: $rideRes");
-              }
-            }).catchError((e) {
-              debugPrint("🔔 [DRIVER] Error fetching ride for dialog: $e");
-            });
+              }).catchError((e) {
+                debugPrint("🔔 [DRIVER] Error fetching ride for dialog: $e");
+              });
+            }
           }
         }
 
