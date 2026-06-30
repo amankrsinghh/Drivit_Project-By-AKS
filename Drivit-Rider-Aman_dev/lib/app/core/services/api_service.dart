@@ -1018,6 +1018,8 @@ class ApiService {
     required String pickupLocation,
     required Map<String, double> pickupCoords,
     required String scheduledAt,
+    required String paymentMethod,
+    String? paymentId,
   }) async {
     try {
       final response = await http.post(
@@ -1028,6 +1030,8 @@ class ApiService {
           'pickupLocation': pickupLocation,
           'pickupCoords': pickupCoords,
           'scheduledAt': scheduledAt,
+          'paymentMethod': paymentMethod,
+          'paymentId': paymentId,
         }),
       );
       return _processResponse(response);

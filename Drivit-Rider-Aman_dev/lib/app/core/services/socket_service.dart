@@ -14,6 +14,7 @@ import '../../modules/profile/controllers/profile_controller.dart';
 import '../../routes/app_routes.dart'; // import for Get.toNamed(Routes.findingDriver)
 import '../../modules/home/controllers/home_controller.dart';
 import '../../modules/chat/controller/chat_controller.dart';
+import '../../modules/car_clinic/controllers/car_clinic_controller.dart';
 
 class SocketService extends GetxService {
   IO.Socket? socket;
@@ -253,6 +254,13 @@ class SocketService extends GetxService {
         if (fdc.rideDatabaseId.value.isNotEmpty) {
            fdc.fetchRideDetails(fdc.rideDatabaseId.value);
         }
+      }
+    });
+
+    socket?.on('clinic:status_changed', (data) {
+      debugPrint("Socket: Clinic status updated: $data");
+      if (Get.isRegistered<CarClinicController>()) {
+        Get.find<CarClinicController>().fetchMyBookings();
       }
     });
 

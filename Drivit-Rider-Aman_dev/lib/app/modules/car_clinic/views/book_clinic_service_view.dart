@@ -253,7 +253,118 @@ class BookClinicServiceView extends GetView<CarClinicController> {
               ),
               const SizedBox(height: 20),
 
-              // 4. Billing Breakdown Card
+              // 4. Payment Method Card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xffF1F5F9)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Payment Method",
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () {
+                              controller.selectedPaymentMethod.value = "Cash";
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                color: controller.selectedPaymentMethod.value == "Cash"
+                                    ? const Color(0xffFFF7EE)
+                                    : const Color(0xffF8FAFC),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: controller.selectedPaymentMethod.value == "Cash"
+                                      ? const Color(0xffF38900)
+                                      : Colors.transparent,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.money_rounded,
+                                    color: controller.selectedPaymentMethod.value == "Cash"
+                                        ? const Color(0xffF38900)
+                                        : Colors.grey,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    "Cash on Service",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: controller.selectedPaymentMethod.value == "Cash"
+                                          ? const Color(0xffF38900)
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () {
+                              controller.selectedPaymentMethod.value = "Razorpay";
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                color: controller.selectedPaymentMethod.value == "Razorpay"
+                                    ? const Color(0xffFFF7EE)
+                                    : const Color(0xffF8FAFC),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: controller.selectedPaymentMethod.value == "Razorpay"
+                                      ? const Color(0xffF38900)
+                                      : Colors.transparent,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.payment_rounded,
+                                    color: controller.selectedPaymentMethod.value == "Razorpay"
+                                        ? const Color(0xffF38900)
+                                        : Colors.grey,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    "Pay Now (Razorpay)",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: controller.selectedPaymentMethod.value == "Razorpay"
+                                          ? const Color(0xffF38900)
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // 5. Billing Breakdown Card
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -294,7 +405,7 @@ class BookClinicServiceView extends GetView<CarClinicController> {
               ),
               const SizedBox(height: 32),
 
-              // 5. Booking Button
+              // 6. Booking Button
               SizedBox(
                 width: double.infinity,
                 height: 52,
