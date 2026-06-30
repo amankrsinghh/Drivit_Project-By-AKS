@@ -297,8 +297,9 @@ class SelectRideController extends GetxController {
     ever(selectedPackage, (_) => calculateTotalPrice());
     ever(tripType, (String val) {
       if (val == "Round Trip") {
-        selectedPackage.value = "1 Day";
-        numberOfDays.value = 1;
+        int initialDays = (requiredHours.value / 24.0).ceil();
+        numberOfDays.value = initialDays > 1 ? initialDays : 1;
+        selectedPackage.value = "${numberOfDays.value} Day${numberOfDays.value > 1 ? 's' : ''}";
       }
       fetchRoute();
       calculateTotalPrice();
@@ -663,12 +664,12 @@ class SelectRideController extends GetxController {
   final requiredHours = 0.0.obs;
   final carWashCharge = 0.0.obs;
   final rideRequestRadius = 50.0.obs; // Defaults to 50km
-  final outstationMaxRange = 500.0.obs; // Defaults to 500km
+  final outstationMaxRange = 1000.0.obs; // Defaults to 1000km
   final isCalculatingPrices = false.obs;
   bool _hasShownTimeExceededSnack = false;
 
   int get maxAllowedHours {
-    if (tripType.value == "Round Trip") {
+    if (tripType.value == "Round Trip" && !outstationRoundUseEstimatedHours.value) {
       return numberOfDays.value * 24;
     }
     int max = 12;
@@ -687,8 +688,11 @@ class SelectRideController extends GetxController {
   void calculateTotalPrice() {
     try {
       isCalculatingPrices.value = true;
-      if (tripType.value == "Round Trip") {
+      final typeName = tripType.value.trim().toLowerCase();
+      if (typeName == "one way" || typeName == "round trip") {
         isOutstationFlow.value = true;
+      } else {
+        isOutstationFlow.value = false;
       }
     double pLat = pickupLat.value;
     double pLng = pickupLng.value;
@@ -709,15 +713,21 @@ class SelectRideController extends GetxController {
       }
     }
     calculatedDistance.value = dist;
-    double reqHrs = (dist / 30.0).ceilToDouble(); // Assuming average speed of 30 km/h
-    requiredHours.value = reqHrs;
-
     // Estimate travel time
     if (routedDuration.value > 0) {
       estimatedTime.value = (routedDuration.value / 60.0).roundToDouble(); // convert seconds to minutes
     } else {
       estimatedTime.value = (dist * 4).roundToDouble(); // fallback roughly 4 mins per km
     }
+
+    double reqHrs;
+    if (routedDuration.value > 0) {
+      reqHrs = (routedDuration.value / 3600.0).ceilToDouble();
+    } else {
+      double speed = isOutstationFlow.value ? 50.0 : 30.0;
+      reqHrs = (dist / speed).ceilToDouble();
+    }
+    requiredHours.value = reqHrs;
 
     if (dist > 0 && reqHrs > maxAllowedHours && !_hasShownTimeExceededSnack) {
       if (!isPickupFocused.value && !isDestinationFocused.value) {
@@ -814,7 +824,7 @@ class SelectRideController extends GetxController {
         hourlyCost.value = 0.0;
       } else {
         if (tripType.value == "Round Trip") {
-          usageCost.value = hourlyCost.value;
+          usageCost.value = hourlyCost.value + returnCharge.value;
         } else {
           usageCost.value = distanceCost.value + hourlyCost.value + returnCharge.value;
         }
@@ -1082,12 +1092,7 @@ class SelectRideController extends GetxController {
       return;
     }
 
-    // 1. Core Field Validation (Pickup/Dest)
-    if (tripType.value == "Round Trip") {
-      destination.value = pickup.value;
-      dropoffLat.value = pickupLat.value;
-      dropoffLng.value = pickupLng.value;
-    } else if (destination.value == "Destination" || destination.value.isEmpty) {
+    if (destination.value == "Destination" || destination.value.isEmpty) {
       Get.snackbar("Destination Required", "Please select a destination location.",
           snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
       return;
@@ -1210,12 +1215,7 @@ class SelectRideController extends GetxController {
   Future<void> bookNow({bool isScheduled = false}) async {
     debugPrint("🚕 BN[1]: bookNow() called — isScheduled=$isScheduled");
     try {
-    // 1. Validation
-    if (tripType.value == "Round Trip") {
-      destination.value = pickup.value;
-      dropoffLat.value = pickupLat.value;
-      dropoffLng.value = pickupLng.value;
-    } else if (destination.value == "Destination" || destination.value.isEmpty) {
+    if (destination.value == "Destination" || destination.value.isEmpty) {
       debugPrint("🚕 BN[BAIL]: destination empty/unset = '${destination.value}'");
       return;
     }

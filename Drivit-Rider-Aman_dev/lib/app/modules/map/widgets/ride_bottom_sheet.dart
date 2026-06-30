@@ -1095,8 +1095,9 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
       final leftLabel = isBooked ? "Book Now" : "Schedule";
       final rightLabel = isBooked ? " Home" : "Book Now";
 
+      final maxRange = controller.isOutstationFlow.value ? controller.outstationMaxRange.value : controller.rideRequestRadius.value;
       final isOutOfRange = controller.isBothLocationsSelected &&
-          controller.calculatedDistance.value > controller.rideRequestRadius.value;
+          controller.calculatedDistance.value > maxRange;
 
       return Row(
         children: [

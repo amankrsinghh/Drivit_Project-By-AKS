@@ -45,12 +45,12 @@ class HomeView extends GetView<HomeController> {
               child: Obx(() {
                 final ride = controller.activeRideData.value;
                 if (ride == null) return const SizedBox.shrink();
-                
+
                 final rideId = ride['_id']?.toString() ?? '';
                 final status = ride['status']?.toString() ?? '';
                 final bookingId = ride['booking_id']?.toString() ?? "";
-                final String displayId = bookingId.isNotEmpty 
-                    ? bookingId 
+                final String displayId = bookingId.isNotEmpty
+                    ? bookingId
                     : "RID${(rideId.substring((rideId.length - 8).clamp(0, rideId.length))).toUpperCase()}";
 
                 final isPending = status == 'Pending';
@@ -66,7 +66,12 @@ class HomeView extends GetView<HomeController> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 5, 161, 39), // Vibrant premium orange (matching Driver app)
+                      color: const Color.fromARGB(
+                        255,
+                        5,
+                        161,
+                        39,
+                      ), // Vibrant premium orange (matching Driver app)
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: const [
                         BoxShadow(
@@ -84,26 +89,33 @@ class HomeView extends GetView<HomeController> {
                           onTap: () {
                             Get.toNamed(
                               Routes.findingDriver,
-                              arguments: {
-                                'rideId': rideId,
-                                'status': status,
-                              },
+                              arguments: {'rideId': rideId, 'status': status},
                             );
                           },
                           borderRadius: BorderRadius.circular(16),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                             child: Row(
                               children: [
-                                const Icon(Icons.directions_car, color: Colors.white, size: 24),
+                                const Icon(
+                                  Icons.directions_car,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        isPending ? "Finding best driver..." : "Active Trip is Live",
+                                        isPending
+                                            ? "Finding best driver..."
+                                            : "Active Trip is Live",
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.w900,
@@ -111,8 +123,8 @@ class HomeView extends GetView<HomeController> {
                                         ),
                                       ),
                                       Text(
-                                        isPending 
-                                            ? "Booking ID: $displayId • Tap to view" 
+                                        isPending
+                                            ? "Booking ID: $displayId • Tap to view"
                                             : "Booking ID: $displayId • Tap to resume",
                                         style: const TextStyle(
                                           color: Colors.white70,
@@ -123,7 +135,11 @@ class HomeView extends GetView<HomeController> {
                                     ],
                                   ),
                                 ),
-                                const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                                const Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
                               ],
                             ),
                           ),
@@ -158,7 +174,7 @@ class _HomeTab extends GetView<HomeController> {
         return Opacity(opacity: opacity, child: child);
       },
       child: Stack(
-        children: [ 
+        children: [
           // Main Content
           Column(
             children: [
@@ -234,7 +250,8 @@ class _HomeTab extends GetView<HomeController> {
                       const SizedBox(height: 15),
                       _buildFullWidthServiceCard(
                         title: "Car Clinic",
-                        subtitle: "Mechanical support, water wash, puncture & detailing",
+                        subtitle:
+                            "Mechanical support, water wash, puncture & detailing",
                         icon: Icons.build_circle_rounded,
                         iconColor: const Color(0xff009688),
                         iconBgColor: const Color(0xffE0F2F1),
@@ -251,15 +268,14 @@ class _HomeTab extends GetView<HomeController> {
                             gradient: const LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [
-                                Color(0xffF38900),
-                                Color(0xffE07A00),
-                              ],
+                              colors: [Color(0xffF38900), Color(0xffE07A00)],
                             ),
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xffF38900).withValues(alpha: 0.3),
+                                color: const Color(
+                                  0xffF38900,
+                                ).withValues(alpha: 0.3),
                                 blurRadius: 10,
                                 offset: const Offset(0, 5),
                               ),
@@ -273,7 +289,11 @@ class _HomeTab extends GetView<HomeController> {
                                   color: Colors.white.withValues(alpha: 0.2),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.request_quote_rounded, color: Colors.white, size: 28),
+                                child: const Icon(
+                                  Icons.request_quote_rounded,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -292,14 +312,20 @@ class _HomeTab extends GetView<HomeController> {
                                     Text(
                                       "View pricing for hourly, outstation & standard rides",
                                       style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.85),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.85,
+                                        ),
                                         fontSize: 13,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                             ],
                           ),
                         ),
@@ -320,19 +346,22 @@ class _HomeTab extends GetView<HomeController> {
     final List<Map<String, dynamic>> promos = [
       {
         'title': "Need a Driver?",
-        'subtitle': "Book a professional driver for your personal car instantly.",
+        'subtitle':
+            "Book a professional driver for your personal car instantly.",
         'icon': Icons.drive_eta_rounded,
         'colors': [const Color(0xffF38900), const Color(0xffFFB24D)],
       },
       {
         'title': "Police Verified",
-        'subtitle': "Thorough background and police verification for your complete safety.",
+        'subtitle':
+            "Thorough background and police verification for your complete safety.",
         'icon': Icons.verified_user_rounded,
         'colors': [const Color(0xff1E3C72), const Color(0xff2A5298)],
       },
       {
         'title': "Experienced Drivers",
-        'subtitle': "Sit back and relax while our highly experienced drivers navigate traffic.",
+        'subtitle':
+            "Sit back and relax while our highly experienced drivers navigate traffic.",
         'icon': Icons.star_rounded,
         'colors': [const Color(0xff6C33A3), const Color(0xff8D4DE8)],
       },
@@ -360,7 +389,9 @@ class _HomeTab extends GetView<HomeController> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: (promo['colors'] as List<Color>).first.withValues(alpha: 0.25),
+                      color: (promo['colors'] as List<Color>).first.withValues(
+                        alpha: 0.25,
+                      ),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -414,24 +445,26 @@ class _HomeTab extends GetView<HomeController> {
           ),
         ),
         const SizedBox(height: 10),
-        Obx(() => Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                promos.length,
-                (index) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  height: 6,
-                  width: promoIndex.value == index ? 16 : 6,
-                  decoration: BoxDecoration(
-                    color: promoIndex.value == index
-                        ? const Color(0xffF38900)
-                        : Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
+        Obx(
+          () => Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              promos.length,
+              (index) => AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                height: 6,
+                width: promoIndex.value == index ? 16 : 6,
+                decoration: BoxDecoration(
+                  color: promoIndex.value == index
+                      ? const Color(0xffF38900)
+                      : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
-            )),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -564,11 +597,14 @@ class _HomeTab extends GetView<HomeController> {
               ),
             ),
             const SizedBox(width: 8),
-            Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey.shade400, size: 16),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.grey.shade400,
+              size: 16,
+            ),
           ],
         ),
       ),
     );
   }
-
 }
