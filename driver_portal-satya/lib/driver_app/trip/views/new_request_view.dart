@@ -466,7 +466,11 @@ class _DriverNewRequestViewState extends State<DriverNewRequestView> {
                         ),
                       ),
                       Text(
-                        "${controller.rideData['tripType'] ?? 'One Way'} • ${controller.rideData['carPackage'] ?? controller.rideData['package'] ?? '-'}",
+                        "${() {
+                          final bool isOutstation = controller.rideData['isOutstation'] == true || controller.rideData['isOutstation'] == 'true';
+                          final String tripType = controller.rideData['tripType']?.toString() ?? 'One Way';
+                          return isOutstation ? 'Outstation · $tripType' : 'Local';
+                        }()} • ${controller.rideData['carPackage'] ?? controller.rideData['package'] ?? '-'}",
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ],

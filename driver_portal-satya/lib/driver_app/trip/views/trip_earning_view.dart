@@ -175,6 +175,8 @@ class DriverTripEarningView extends StatelessWidget {
                         return Column(children: [
                           if (controller.distanceCost.value > 0)
                             _row("Base Fare", "₹ ${controller.distanceCost.value.toStringAsFixed(0)}"),
+                          if (controller.returnCharge.value > 0)
+                            _row("Return Charges", "₹ ${controller.returnCharge.value.toStringAsFixed(0)}"),
                           if (controller.hourlyCost.value > 0 || (controller.hourlyPackage.value.isNotEmpty && controller.hourlyPackage.value != "-")) ...[
                             if (controller.tripType.value == "Round Trip") ...[
                               _row("Round Trip Duration", () {

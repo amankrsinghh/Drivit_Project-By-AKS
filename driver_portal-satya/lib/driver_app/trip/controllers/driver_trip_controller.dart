@@ -56,6 +56,7 @@ class DriverTripController extends GetxController {
   final hourlyCost = 0.0.obs;
   final platformCharge = 0.0.obs;
   final gst = 0.0.obs;
+  final returnCharge = 0.0.obs;
 
   // Car/Vehicle Details
   final carModel = "SUV".obs;
@@ -359,6 +360,7 @@ class DriverTripController extends GetxController {
     hourlyCost.value = (ride['hourlyCost'] ?? 0.0).toDouble();
     platformCharge.value = (ride['platformCharge'] ?? 0.0).toDouble();
     gst.value = (ride['gst'] ?? 0.0).toDouble();
+    returnCharge.value = (ride['returnCharge'] ?? 0.0).toDouble();
     if (ride['actualDuration'] != null) {
       int mins = (ride['actualDuration'] as num).toInt();
       tripDuration.value = _formatDuration(mins);

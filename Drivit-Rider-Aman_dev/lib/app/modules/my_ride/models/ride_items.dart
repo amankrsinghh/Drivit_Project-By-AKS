@@ -63,6 +63,7 @@ class RideItem {
   final double distanceCost;  //
   final double platformCharge;
   final double gst;
+  final double returnCharge;
   final String bookingTimeText; // Real booking time (createdAt)
   final String scheduledTimeText; // Scheduled time (scheduledAt)
   final String completionTimeText; // Completion time (completedAt)
@@ -98,6 +99,7 @@ class RideItem {
     this.distanceCost = 0,
     this.platformCharge = 0,
     this.gst = 0,
+    this.returnCharge = 0,
 
 
     this.rawId,
@@ -328,6 +330,7 @@ class RideItem {
       distanceCost: (json['distanceCost'] ?? 0.0).toDouble(),
       platformCharge: (json['platformCharge'] ?? 0.0).toDouble(),
       gst: (json['gst'] ?? 0.0).toDouble(),
+      returnCharge: (json['returnCharge'] ?? 0.0).toDouble(),
 
       createdAt: relevantDate,
       isDriverRated: json['is_driver_rated'] ?? false,

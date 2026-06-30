@@ -580,6 +580,8 @@ class MyRideDetailView extends StatelessWidget {
             const SizedBox(height: 10),
             if (item.distanceCost > 0)
               _kv("Base Fare", "₹ ${item.distanceCost.toStringAsFixed(0)}"),
+            if (item.returnCharge > 0)
+              _kv("Return Charges", "₹ ${item.returnCharge.toStringAsFixed(0)}"),
             if (item.hourlyPackageHours > 0) ...[
               if (item.tripType == 'Round Trip') ...[
                 _kv("Round Trip Duration", "${item.hourlyPackageHours ~/ 24} Day${(item.hourlyPackageHours ~/ 24) > 1 ? 's' : ''}"),
