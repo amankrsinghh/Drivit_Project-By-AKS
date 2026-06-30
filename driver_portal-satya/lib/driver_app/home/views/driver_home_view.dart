@@ -78,7 +78,7 @@ class DriverHomeView extends GetView<DriverHomeController> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFF9800), // Vibrant premium orange
+                            color: const Color.fromARGB(255, 226, 139, 9), // Vibrant premium orange
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: const [
                               BoxShadow(

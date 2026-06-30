@@ -66,7 +66,7 @@ class HomeView extends GetView<HomeController> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF9800), // Vibrant premium orange (matching Driver app)
+                      color: const Color.fromARGB(255, 5, 161, 39), // Vibrant premium orange (matching Driver app)
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: const [
                         BoxShadow(
