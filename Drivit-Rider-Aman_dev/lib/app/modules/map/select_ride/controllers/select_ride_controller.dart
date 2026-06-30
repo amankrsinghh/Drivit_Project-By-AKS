@@ -741,7 +741,13 @@ class SelectRideController extends GetxController {
       distanceCost.value = (dist * basePricePerKm.value * multiplier).roundToDouble();
 
       double hours = 0.0;
-      if (isAirportFlow.value || !shouldShowEstimatedHours) {
+      if (isAirportFlow.value) {
+        selectedPackage.value = "";
+        hours = 0.0;
+      } else if (tripType.value == "Round Trip" && !outstationRoundUseEstimatedHours.value) {
+        hours = numberOfDays.value * 24.0;
+        selectedPackage.value = "${numberOfDays.value} Day${numberOfDays.value > 1 ? 's' : ''}";
+      } else if (!shouldShowEstimatedHours) {
         selectedPackage.value = "";
         hours = 0.0;
       } else {
