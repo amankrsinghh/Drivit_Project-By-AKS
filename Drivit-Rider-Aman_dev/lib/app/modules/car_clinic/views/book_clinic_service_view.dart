@@ -94,7 +94,7 @@ class BookClinicServiceView extends GetView<CarClinicController> {
                         ),
                         TextButton.icon(
                           onPressed: () async {
-                            await controller.loadDefaultLocation();
+                            await controller.pickLocationFromMap();
                             addressTextController.text = controller.pickupAddress.value;
                           },
                           icon: const Icon(Icons.my_location_rounded, size: 14, color: Color(0xffF38900)),

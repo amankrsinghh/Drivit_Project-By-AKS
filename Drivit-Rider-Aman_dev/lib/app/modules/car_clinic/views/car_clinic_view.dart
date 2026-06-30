@@ -17,7 +17,20 @@ class _CarClinicViewState extends State<CarClinicView> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: controller.activeTabIndex.value,
+    );
+    _tabController.addListener(() {
+      controller.activeTabIndex.value = _tabController.index;
+    });
+    
+    ever(controller.activeTabIndex, (int val) {
+      if (mounted && _tabController.index != val) {
+        _tabController.animateTo(val);
+      }
+    });
   }
 
   @override

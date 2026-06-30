@@ -115,7 +115,13 @@ class _MapConfirmViewState extends State<MapConfirmView> {
             LocationFAB(mapController: internalMapC),
             ConfirmButton(
               onTap: () {
-                if (Get.isRegistered<RegisterController>()) {
+                if (Get.arguments != null && Get.arguments is Map && Get.arguments['returnLocation'] == true) {
+                  Get.back(result: {
+                    'address': controller.currentAddressSubtitle.value,
+                    'lat': controller.pickedLocation.value?.latitude ?? controller.currentPosition.value?.latitude ?? 0.0,
+                    'lng': controller.pickedLocation.value?.longitude ?? controller.currentPosition.value?.longitude ?? 0.0,
+                  });
+                } else if (Get.isRegistered<RegisterController>()) {
                   Get.find<RegisterController>().register();
                 } else {
                   Get.toNamed(Routes.carDetails);

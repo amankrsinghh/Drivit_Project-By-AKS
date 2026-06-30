@@ -6,6 +6,7 @@ import '../../../core/services/api_service.dart';
 import '../../../core/services/payment_service.dart';
 import '../../map/controllers/map_controller.dart';
 import '../../profile/controllers/profile_controller.dart';
+import '../../../routes/app_routes.dart';
 import 'package:geolocator/geolocator.dart';
 
 class CarClinicController extends GetxController {
@@ -24,6 +25,7 @@ class CarClinicController extends GetxController {
   final scheduledDate = Rxn<DateTime>();
   final scheduledTime = Rxn<TimeOfDay>();
   final selectedPaymentMethod = "Cash".obs; // 'Cash' or 'Razorpay'
+  final activeTabIndex = 0.obs; // Tab selection: 0 for Services, 1 for Bookings
 
   // Fare Details (Calculated locally first for preview)
   final basePrice = 0.0.obs;
@@ -122,6 +124,19 @@ class CarClinicController extends GetxController {
     }
   }
 
+  Future<void> pickLocationFromMap() async {
+    try {
+      final result = await Get.toNamed(Routes.mapConfirm, arguments: {'returnLocation': true});
+      if (result != null && result is Map) {
+        pickupAddress.value = result['address'] ?? '';
+        pickupLat.value = (result['lat'] as num).toDouble();
+        pickupLng.value = (result['lng'] as num).toDouble();
+      }
+    } catch (e) {
+      debugPrint("Error picking location from map: $e");
+    }
+  }
+
   void selectService(dynamic service) {
     selectedService.value = service;
     basePrice.value = (service['basePrice'] ?? 0.0).toDouble();
@@ -198,10 +213,19 @@ class CarClinicController extends GetxController {
       if (res.containsKey('error')) {
         Get.snackbar("Booking Failed", res['error']?.toString() ?? "Could not book service", backgroundColor: Colors.red, colorText: Colors.white);
       } else {
-        Get.snackbar("Success", "Your Car Clinic booking has been placed successfully!", backgroundColor: Colors.green, colorText: Colors.white);
         fetchMyBookings();
-        Get.back();
-        Get.back();
+        Get.defaultDialog(
+          title: "Booking Successful",
+          middleText: "Your Car Clinic booking has been placed successfully!",
+          textConfirm: "OK",
+          confirmTextColor: Colors.white,
+          buttonColor: const Color(0xffF38900),
+          onConfirm: () {
+            Get.back(); // Pop the dialog
+            activeTabIndex.value = 1; // Switch tab to My Bookings
+            Get.back(); // Pop the booking details checkout page
+          },
+        );
       }
     } catch (e) {
       Get.snackbar("Error", e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
