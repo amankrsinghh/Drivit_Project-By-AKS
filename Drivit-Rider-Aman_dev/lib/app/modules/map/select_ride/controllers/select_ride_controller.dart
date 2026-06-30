@@ -67,6 +67,31 @@ class SelectRideController extends GetxController {
 
   final basePricePerKm = 10.0.obs;
   final outstationReturnChargeRate = 10.0.obs;
+  
+  // New Trip Configuration Rx Settings
+  final localEnableReturnCharge = false.obs;
+  final localReturnChargeRate = 10.0.obs;
+  final localShowEstimatedHours = true.obs;
+  
+  final outstationRoundUseEstimatedHours = false.obs;
+  final outstationRoundEnableReturnCharge = false.obs;
+  final outstationRoundReturnChargeRate = 10.0.obs;
+  
+  final outstationOneWayShowEstimatedHours = true.obs;
+  final outstationOneWayEnableReturnCharge = true.obs;
+
+  bool get shouldShowEstimatedHours {
+    if (!isOutstationFlow.value) {
+      return localShowEstimatedHours.value;
+    } else {
+      if (tripType.value == "One Way") {
+        return outstationOneWayShowEstimatedHours.value;
+      } else {
+        return outstationRoundUseEstimatedHours.value;
+      }
+    }
+  }
+
   final returnCharge = 0.0.obs;
   final carWashPriceSetting = 150.0.obs;
   final platformCharge = 20.0.obs;
@@ -714,7 +739,7 @@ class SelectRideController extends GetxController {
       distanceCost.value = (dist * basePricePerKm.value * multiplier).roundToDouble();
 
       double hours = 0.0;
-      if (isAirportFlow.value) {
+      if (isAirportFlow.value || !shouldShowEstimatedHours) {
         selectedPackage.value = "";
         hours = 0.0;
       } else {
@@ -750,8 +775,20 @@ class SelectRideController extends GetxController {
       hourlyCost.value = hours * selectedHourPrice.value;
       
       double returnChg = 0.0;
-      if (tripType.value == "One Way" && isOutstationFlow.value) {
-        returnChg = (dist * outstationReturnChargeRate.value * multiplier).roundToDouble();
+      if (isOutstationFlow.value) {
+        if (tripType.value == "One Way") {
+          if (outstationOneWayEnableReturnCharge.value) {
+            returnChg = (dist * outstationReturnChargeRate.value * multiplier).roundToDouble();
+          }
+        } else if (tripType.value == "Round Trip") {
+          if (outstationRoundEnableReturnCharge.value) {
+            returnChg = (dist * outstationRoundReturnChargeRate.value * multiplier).roundToDouble();
+          }
+        }
+      } else {
+        if (localEnableReturnCharge.value) {
+          returnChg = (dist * localReturnChargeRate.value * multiplier).roundToDouble();
+        }
       }
       returnCharge.value = returnChg;
       
@@ -787,8 +824,20 @@ class SelectRideController extends GetxController {
       hourlyCost.value = 0.0;
       
       double returnChg = 0.0;
-      if (tripType.value == "One Way" && isOutstationFlow.value) {
-        returnChg = (dist * outstationReturnChargeRate.value * multiplier).roundToDouble();
+      if (isOutstationFlow.value) {
+        if (tripType.value == "One Way") {
+          if (outstationOneWayEnableReturnCharge.value) {
+            returnChg = (dist * outstationReturnChargeRate.value * multiplier).roundToDouble();
+          }
+        } else if (tripType.value == "Round Trip") {
+          if (outstationRoundEnableReturnCharge.value) {
+            returnChg = (dist * outstationRoundReturnChargeRate.value * multiplier).roundToDouble();
+          }
+        }
+      } else {
+        if (localEnableReturnCharge.value) {
+          returnChg = (dist * localReturnChargeRate.value * multiplier).roundToDouble();
+        }
       }
       returnCharge.value = returnChg;
       
@@ -876,6 +925,38 @@ class SelectRideController extends GetxController {
     if (settings.containsKey('gst_percentage')) {
       gstPercentage.value =
           double.tryParse(settings['gst_percentage'].toString()) ?? 5.0;
+    }
+
+    // Parse new trip configuration settings
+    if (settings.containsKey('local_enable_return_charge')) {
+      final val = settings['local_enable_return_charge'];
+      localEnableReturnCharge.value = (val == true || val.toString().toLowerCase() == 'true');
+    }
+    if (settings.containsKey('local_return_charge_rate')) {
+      localReturnChargeRate.value = double.tryParse(settings['local_return_charge_rate'].toString()) ?? 10.0;
+    }
+    if (settings.containsKey('local_show_estimated_hours')) {
+      final val = settings['local_show_estimated_hours'];
+      localShowEstimatedHours.value = (val == true || val.toString().toLowerCase() == 'true');
+    }
+    if (settings.containsKey('outstation_round_use_estimated_hours')) {
+      final val = settings['outstation_round_use_estimated_hours'];
+      outstationRoundUseEstimatedHours.value = (val == true || val.toString().toLowerCase() == 'true');
+    }
+    if (settings.containsKey('outstation_round_enable_return_charge')) {
+      final val = settings['outstation_round_enable_return_charge'];
+      outstationRoundEnableReturnCharge.value = (val == true || val.toString().toLowerCase() == 'true');
+    }
+    if (settings.containsKey('outstation_round_return_charge_rate')) {
+      outstationRoundReturnChargeRate.value = double.tryParse(settings['outstation_round_return_charge_rate'].toString()) ?? 10.0;
+    }
+    if (settings.containsKey('outstation_one_way_show_estimated_hours')) {
+      final val = settings['outstation_one_way_show_estimated_hours'];
+      outstationOneWayShowEstimatedHours.value = (val == true || val.toString().toLowerCase() == 'true');
+    }
+    if (settings.containsKey('outstation_one_way_enable_return_charge')) {
+      final val = settings['outstation_one_way_enable_return_charge'];
+      outstationOneWayEnableReturnCharge.value = (val == true || val.toString().toLowerCase() == 'true');
     }
   }
 
@@ -1018,8 +1099,8 @@ class SelectRideController extends GetxController {
       return;
     }
     
-    // Airport flow does not require a package. Local and Outstation (One Way and Round Trip) require a package.
-    final bool doesNotRequirePackage = isAirportFlow.value;
+    // Airport flow does not require a package. Local and Outstation (One Way and Round Trip) require a package, unless disabled by setting.
+    final bool doesNotRequirePackage = isAirportFlow.value || !shouldShowEstimatedHours;
     if (!doesNotRequirePackage && selectedPackage.value.isEmpty) {
       Get.snackbar("Package Required", "Please select estimated usage hours.",
           snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
@@ -1142,7 +1223,7 @@ class SelectRideController extends GetxController {
       return;
     }
 
-    final bool doesNotRequirePackage = isAirportFlow.value;
+    final bool doesNotRequirePackage = isAirportFlow.value || !shouldShowEstimatedHours;
     if (!doesNotRequirePackage && selectedPackage.value.isEmpty) {
       debugPrint("🚕 BN[BAIL]: package required but empty. tripType=${tripType.value}");
       return;

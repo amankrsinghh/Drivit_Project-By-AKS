@@ -399,18 +399,28 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Obx(() => controller.tripType.value == "Round Trip"
-            ? const Text(
-                "Duration & Itinerary",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              )
-            : const Text(
-                "Estimated Usage",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              )),
-        const SizedBox(height: 8),
         Obx(() {
-          if (controller.tripType.value == "Round Trip") {
+          final bool useDays = controller.tripType.value == "Round Trip" && !controller.outstationRoundUseEstimatedHours.value;
+          if (useDays) {
+            return const Text(
+              "Duration & Itinerary",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            );
+          } else {
+            return controller.shouldShowEstimatedHours
+                ? const Text(
+                    "Estimated Usage",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  )
+                : const SizedBox.shrink();
+          }
+        }),
+        Obx(() => controller.shouldShowEstimatedHours || (controller.tripType.value == "Round Trip" && !controller.outstationRoundUseEstimatedHours.value)
+            ? const SizedBox(height: 8)
+            : const SizedBox.shrink()),
+        Obx(() {
+          final bool useDays = controller.tripType.value == "Round Trip" && !controller.outstationRoundUseEstimatedHours.value;
+          if (useDays) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -490,6 +500,10 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                 ),
               ],
             );
+          }
+
+          if (!controller.shouldShowEstimatedHours) {
+            return const SizedBox.shrink();
           }
 
           final selectedType = controller.tripTypesList

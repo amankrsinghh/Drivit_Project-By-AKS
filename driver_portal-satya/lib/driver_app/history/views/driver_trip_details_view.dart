@@ -383,6 +383,8 @@ class _DriverTripDetailsViewState extends State<DriverTripDetailsView> {
                             const SizedBox(height: 15),
                             if (trip.distanceCost > 0)
                               _kv("Base Fare", "₹ ${trip.distanceCost}"),
+                            if (trip.returnCharge > 0)
+                              _kv("Return Charges", "₹ ${trip.returnCharge}"),
                             if (trip.hourlyPackageHours > 0) ...[
                               if (trip.tripType == 'Round Trip') ...[
                                 _kv("Round Trip Duration", "${trip.hourlyPackageHours ~/ 24} Day${(trip.hourlyPackageHours ~/ 24) > 1 ? 's' : ''}"),

@@ -37,6 +37,7 @@ class DriverTripHistoryModel {
   final String completionTimeText; // Completion time (completedAt)
   final int platformCharge;
   final int gst;
+  final int returnCharge;
 
   // for canceled screen note
   final String? cancelNote;
@@ -95,6 +96,7 @@ class DriverTripHistoryModel {
     this.carWashPrice = 0,
     this.platformCharge = 0,
     this.gst = 0,
+    this.returnCharge = 0,
   });
 
   static int _parseInt(dynamic val) {
@@ -271,6 +273,7 @@ class DriverTripHistoryModel {
       completionTimeText: finalCompletionTime,
       platformCharge: _parseInt(json['platformCharge']),
       gst: _parseInt(json['gst']),
+      returnCharge: _parseInt(json['returnCharge']),
     );
   }
 
