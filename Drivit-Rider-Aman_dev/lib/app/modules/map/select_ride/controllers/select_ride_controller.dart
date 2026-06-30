@@ -66,6 +66,8 @@ class SelectRideController extends GetxController {
   final scheduleTime = Rxn<TimeOfDay>();
 
   final basePricePerKm = 10.0.obs;
+  final outstationReturnChargeRate = 10.0.obs;
+  final returnCharge = 0.0.obs;
   final carWashPriceSetting = 150.0.obs;
   final platformCharge = 20.0.obs;
   final gstPercentage = 5.0.obs;
@@ -747,6 +749,12 @@ class SelectRideController extends GetxController {
 
       hourlyCost.value = hours * selectedHourPrice.value;
       
+      double returnChg = 0.0;
+      if (tripType.value == "One Way" && isOutstationFlow.value) {
+        returnChg = (dist * outstationReturnChargeRate.value * multiplier).roundToDouble();
+      }
+      returnCharge.value = returnChg;
+      
       if (isAirportFlow.value) {
         usageCost.value = distanceCost.value;
         carWashCharge.value = 0.0;
@@ -755,7 +763,7 @@ class SelectRideController extends GetxController {
         if (tripType.value == "Round Trip") {
           usageCost.value = hourlyCost.value;
         } else {
-          usageCost.value = distanceCost.value + hourlyCost.value;
+          usageCost.value = distanceCost.value + hourlyCost.value + returnCharge.value;
         }
         if (requireCarWash.value) {
           carWashCharge.value = carWashPriceSetting.value;
@@ -777,7 +785,14 @@ class SelectRideController extends GetxController {
 
       distanceCost.value = (dist * basePricePerKm.value * multiplier).roundToDouble();
       hourlyCost.value = 0.0;
-      usageCost.value = distanceCost.value;
+      
+      double returnChg = 0.0;
+      if (tripType.value == "One Way" && isOutstationFlow.value) {
+        returnChg = (dist * outstationReturnChargeRate.value * multiplier).roundToDouble();
+      }
+      returnCharge.value = returnChg;
+      
+      usageCost.value = distanceCost.value + returnCharge.value;
       carWashCharge.value = 0.0;
       totalPrice.value = usageCost.value.roundToDouble();
       
@@ -837,6 +852,10 @@ class SelectRideController extends GetxController {
     if (settings.containsKey('base_price_per_km')) {
       basePricePerKm.value =
           double.tryParse(settings['base_price_per_km'].toString()) ?? 10.0;
+    }
+    if (settings.containsKey('outstation_one_way_return_charge_rate')) {
+      outstationReturnChargeRate.value =
+          double.tryParse(settings['outstation_one_way_return_charge_rate'].toString()) ?? 10.0;
     }
     if (settings.containsKey('ride_request_radius')) {
       rideRequestRadius.value =
@@ -1270,6 +1289,7 @@ class SelectRideController extends GetxController {
         platformCharge: platformCharge.value,
         gst: finalGst,
         isOutstation: isOutstationFlow.value,
+        returnCharge: returnCharge.value,
       );
 
       debugPrint("🚕 BN[11]: bookRide response keys=${res.keys.toList()}, hasError=${res.containsKey('error')}");

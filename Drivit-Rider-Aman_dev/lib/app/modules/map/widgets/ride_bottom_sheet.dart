@@ -895,6 +895,28 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
               ),
               const SizedBox(height: 8),
             ],
+
+            // Outstation One Way Return Charges
+            if (controller.isOutstationFlow.value && controller.tripType.value == "One Way" && controller.returnCharge.value > 0) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      "Return Charges (${controller.calculatedDistance.value.toStringAsFixed(1)} km @ ₹${controller.outstationReturnChargeRate.value.toStringAsFixed(0)}/km)",
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                      softWrap: true,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    "₹${controller.returnCharge.value.toStringAsFixed(0)}",
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
             
             // Car Wash
             if (controller.requireCarWash.value) ...[
@@ -1009,6 +1031,7 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                                     : 0.0,
                                 totalAmount: controller.totalPrice.value,
                                 tripTypeName: controller.tripType.value,
+                                returnCharge: controller.returnCharge.value,
                               );
                             },
                             child: const Padding(
@@ -1213,6 +1236,7 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
     required double totalAmount,
     required String tripTypeName,
     double hourlyCost = 0.0,
+    double returnCharge = 0.0,
   }) {
     final isOutstation = tripTypeName == "Outstation" || tripTypeName == "Round Trip" || controller.isOutstationFlow.value;
     final isOneWay = tripTypeName == "One Way";
@@ -1342,6 +1366,24 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                             ),
                             const SizedBox(height: 8),
                           ],
+                          if (returnCharge > 0) ...[
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    "Return Charges",
+                                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                                  ),
+                                ),
+                                Text(
+                                  "₹${returnCharge.toStringAsFixed(2)}",
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                          ],
                           if (carWashCharge > 0) ...[
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1402,7 +1444,7 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                                 ),
                               ),
                               Text(
-                                "₹${(baseCost + carWashCharge + platformCharge + gstAmount).toStringAsFixed(2)}",
+                                "₹${(baseCost + carWashCharge + platformCharge + gstAmount + returnCharge).toStringAsFixed(2)}",
                                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                               ),
                             ],
@@ -1418,7 +1460,7 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                                 ),
                               ),
                               Text(
-                                "₹${(totalAmount - (baseCost + carWashCharge + platformCharge + gstAmount)).toStringAsFixed(2)}",
+                                "₹${(totalAmount - (baseCost + carWashCharge + platformCharge + gstAmount + returnCharge)).toStringAsFixed(2)}",
                                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                               ),
                             ],
