@@ -991,6 +991,11 @@ class _TripCompletedUI extends StatelessWidget {
                     "Base Fare",
                     () => "₹ ${controller.distanceCost.value.toStringAsFixed(0)}",
                   ),
+                if (controller.returnCharge.value > 0)
+                  _KV(
+                    "Return Charges",
+                    () => "₹ ${controller.returnCharge.value.toStringAsFixed(0)}",
+                  ),
                 if (controller.hourlyCost.value > 0 || (controller.hourlyPackage.value.isNotEmpty && controller.hourlyPackage.value != "-")) ...[
                   if (controller.tripType.value == "Round Trip") ...[
                     _KV("Round Trip Duration", () {
