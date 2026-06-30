@@ -300,6 +300,19 @@ class SelectRideController extends GetxController {
         int initialDays = (requiredHours.value / 24.0).ceil();
         numberOfDays.value = initialDays > 1 ? initialDays : 1;
         selectedPackage.value = "${numberOfDays.value} Day${numberOfDays.value > 1 ? 's' : ''}";
+      } else {
+        final selectedType = tripTypesList.firstWhereOrNull(
+          (t) => t['name'].toString().trim().toLowerCase() == val.trim().toLowerCase(),
+        );
+        if (selectedType != null && selectedType['hourOptions'] != null) {
+          List options = selectedType['hourOptions'] as List;
+          if (options.isNotEmpty) {
+            double req = requiredHours.value;
+            final match = options.firstWhere((h) => (h is num && h >= req), orElse: () => null);
+            final targetOption = match ?? options.first;
+            selectedPackage.value = "${targetOption.toInt()} Hr${targetOption > 1 ? 's' : ''}";
+          }
+        }
       }
       fetchRoute();
       calculateTotalPrice();
