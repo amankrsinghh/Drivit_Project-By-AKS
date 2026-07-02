@@ -61,6 +61,8 @@ class SelectRideController extends GetxController {
   final travelPlanFocusNode = FocusNode();
   final tripTypesList = <dynamic>[].obs;
   final isLoadingTripTypes = false.obs;
+  final ridePackagesList = <dynamic>[].obs;
+  final isLoadingPackages = false.obs;
   final _paymentService = PaymentService();
 
   final scheduleDate = Rxn<DateTime>();
@@ -88,6 +90,13 @@ class SelectRideController extends GetxController {
   
   final outstationOneWayShowEstimatedHours = true.obs;
   final outstationOneWayEnableReturnCharge = true.obs;
+
+  final localExtraHourRate = 80.0.obs;
+  final outstationExtraHourRate = 100.0.obs;
+  final localOneWayExtraKmRate = 7.5.obs;
+  final outstationExtraKmRate = 10.0.obs;
+  final nightChargeRate = 200.0.obs;
+  final outstationTourDailyRate = 1500.0.obs;
 
   bool get shouldShowEstimatedHours {
     if (!isOutstationFlow.value) {
@@ -264,6 +273,7 @@ class SelectRideController extends GetxController {
     fetchCarCategories().then((_) => _prefillTransmissionFromProfile());
     fetchTripTypes();
     fetchPricingSettings();
+    fetchRidePackages();
     checkActivePackage();
     _loadRecentDestinations();
     
@@ -769,60 +779,155 @@ class SelectRideController extends GetxController {
       else if (selectedCarModel.value.toLowerCase().contains("suv")) multiplier = 1.5;
       else if (selectedCarModel.value.toLowerCase().contains("premium")) multiplier = 2.0;
 
-      // Always calculate distance cost if we have a valid distance
-      distanceCost.value = (dist * basePricePerKm.value * multiplier).roundToDouble();
+      final String category = isOutstationFlow.value
+          ? (tripType.value == "Round Trip" ? 'outstation_round' : 'outstation_one_way')
+          : (tripType.value == "Round Trip" ? 'local_round' : 'local_one_way');
 
-      double hours = 0.0;
-      if (isAirportFlow.value) {
-        selectedPackage.value = "";
-        hours = 0.0;
-      } else if (tripType.value == "Round Trip" && !outstationRoundUseEstimatedHours.value) {
-        hours = numberOfDays.value * 24.0;
-        selectedPackage.value = "${numberOfDays.value} Day${numberOfDays.value > 1 ? 's' : ''}";
-      } else if (!shouldShowEstimatedHours) {
-        selectedPackage.value = "";
-        hours = 0.0;
-      } else {
-        if (selectedPackage.value.isNotEmpty) {
-          if (selectedPackage.value.toLowerCase().contains("day")) {
-            hours = (double.tryParse(selectedPackage.value.split(" ")[0]) ?? 0.0) * 24.0;
-          } else {
-            hours = double.tryParse(selectedPackage.value.split(" ")[0]) ?? 0.0;
-          }
-        }
-        
-        // Auto-update hours if current selection is insufficient for distance
-        // but only if a package is already selected or we want to suggest a minimum
-        if (hours < reqHrs && reqHrs > 0 && reqHrs <= maxAllowedHours) {
-          List options = selectedType['hourOptions'] ?? [1, 2, 4, 8, 12];
-          final validOption = options.firstWhere((h) => (h is num && h >= reqHrs), orElse: () => null);
-          if (validOption != null) {
-            hours = validOption.toDouble();
-            String newPkg;
-            if (validOption == 24 && tripType.value == "Round Trip") {
-              newPkg = "1 Day";
-            } else {
-              newPkg = "${validOption.toInt()} Hr${validOption > 1 ? 's' : ''}";
-            }
-            // Only update if changed to avoid unnecessary cycles
-            if (selectedPackage.value != newPkg) {
-              selectedPackage.value = newPkg;
-            }
-          }
-        }
-      }
+      final activePkgs = ridePackagesList
+          .where((p) => p['category'] == category && p['status'] == 'Active')
+          .toList();
 
-      if (tripType.value == "Round Trip") {
-        final bool useEstHours = isOutstationFlow.value 
-            ? outstationRoundUseEstimatedHours.value 
-            : localRoundUseEstimatedHours.value;
-        if (useEstHours) {
-          hourlyCost.value = hours * selectedHourPrice.value;
+      if (activePkgs.isNotEmpty) {
+        // --- NEW DYNAMIC PACKAGE SYSTEM ---
+        double hours = 0.0;
+        if (isAirportFlow.value) {
+          selectedPackage.value = "";
+          hours = 0.0;
+        } else if (tripType.value == "Round Trip" && !outstationRoundUseEstimatedHours.value) {
+          hours = numberOfDays.value * 24.0;
+          selectedPackage.value = "${numberOfDays.value} Day${numberOfDays.value > 1 ? 's' : ''}";
+        } else if (!shouldShowEstimatedHours) {
+          selectedPackage.value = "";
+          hours = 0.0;
         } else {
-          hourlyCost.value = (hours / 24) * selectedDayPrice.value;
+          if (selectedPackage.value.isNotEmpty) {
+            if (selectedPackage.value.toLowerCase().contains("day")) {
+              hours = (double.tryParse(selectedPackage.value.split(" ")[0]) ?? 0.0) * 24.0;
+            } else {
+              hours = double.tryParse(selectedPackage.value.split(" ")[0]) ?? 0.0;
+            }
+          }
+          
+          if (hours < reqHrs && reqHrs > 0 && reqHrs <= maxAllowedHours) {
+            final validPkg = activePkgs.firstWhere(
+              (p) => (p['durationHours'] as num).toDouble() >= reqHrs,
+              orElse: () => null,
+            );
+            if (validPkg != null) {
+              hours = (validPkg['durationHours'] as num).toDouble();
+              final newPkg = validPkg['name'].toString();
+              if (selectedPackage.value != newPkg) {
+                selectedPackage.value = newPkg;
+              }
+            }
+          }
         }
+
+        // Find package matched configuration
+        double baseRate = 0.0;
+        double kmsLimit = 0.0;
+        double packageDurationHours = 0.0;
+        double oneWayCharge = 0.0;
+        double nightCharge = 0.0;
+
+        final isTour = category == 'outstation_round' && hours > 24;
+
+        if (isTour) {
+          final double days = (hours / 24.0).ceilToDouble();
+          baseRate = days * outstationTourDailyRate.value;
+          kmsLimit = days * 300.0;
+          packageDurationHours = days * 24.0;
+        } else {
+          final matchedPkg = activePkgs.firstWhereOrNull(
+            (p) => p['name'].toString().toLowerCase().trim() == selectedPackage.value.toLowerCase().trim()
+          );
+          if (matchedPkg != null) {
+            baseRate = (matchedPkg['rate'] as num).toDouble();
+            kmsLimit = (matchedPkg['kmsLimit'] as num).toDouble();
+            packageDurationHours = (matchedPkg['durationHours'] as num).toDouble();
+            oneWayCharge = (matchedPkg['oneWayCharge'] ?? 0.0 as num).toDouble();
+            nightCharge = (matchedPkg['nightCharge'] ?? 0.0 as num).toDouble();
+          } else if (activePkgs.isNotEmpty) {
+            // Default to first package if selectedPackage is empty or unmatched
+            final firstPkg = activePkgs.first;
+            baseRate = (firstPkg['rate'] as num).toDouble();
+            kmsLimit = (firstPkg['kmsLimit'] as num).toDouble();
+            packageDurationHours = (firstPkg['durationHours'] as num).toDouble();
+            oneWayCharge = (firstPkg['oneWayCharge'] ?? 0.0 as num).toDouble();
+            nightCharge = (firstPkg['nightCharge'] ?? 0.0 as num).toDouble();
+          }
+        }
+
+        // Apply car type multiplier to base rate
+        baseRate = (baseRate * multiplier).roundToDouble();
+
+        // Calculate Extra KMS Fare
+        final extraKms = (dist - kmsLimit).clamp(0.0, double.infinity);
+        final extraKmRate = category == 'local_one_way' ? localOneWayExtraKmRate.value : outstationExtraKmRate.value;
+        final extraKmFare = (extraKms * extraKmRate * multiplier).roundToDouble();
+
+        // Calculate Extra Hours Fare
+        final extraHours = (hours - packageDurationHours).clamp(0.0, double.infinity);
+        final extraHourRate = isOutstationFlow.value ? outstationExtraHourRate.value : localExtraHourRate.value;
+        final extraHourFare = (extraHours * extraHourRate * multiplier).roundToDouble();
+
+        // We use distanceCost and hourlyCost variables to fit into standard subtotal formula
+        distanceCost.value = extraKmFare;
+        hourlyCost.value = baseRate + extraHourFare + oneWayCharge + nightCharge;
+
       } else {
-        hourlyCost.value = hours * selectedHourPrice.value;
+        // --- LEGACY/FALLBACK SYSTEM ---
+        distanceCost.value = (dist * basePricePerKm.value * multiplier).roundToDouble();
+
+        double hours = 0.0;
+        if (isAirportFlow.value) {
+          selectedPackage.value = "";
+          hours = 0.0;
+        } else if (tripType.value == "Round Trip" && !outstationRoundUseEstimatedHours.value) {
+          hours = numberOfDays.value * 24.0;
+          selectedPackage.value = "${numberOfDays.value} Day${numberOfDays.value > 1 ? 's' : ''}";
+        } else if (!shouldShowEstimatedHours) {
+          selectedPackage.value = "";
+          hours = 0.0;
+        } else {
+          if (selectedPackage.value.isNotEmpty) {
+            if (selectedPackage.value.toLowerCase().contains("day")) {
+              hours = (double.tryParse(selectedPackage.value.split(" ")[0]) ?? 0.0) * 24.0;
+            } else {
+              hours = double.tryParse(selectedPackage.value.split(" ")[0]) ?? 0.0;
+            }
+          }
+          
+          if (hours < reqHrs && reqHrs > 0 && reqHrs <= maxAllowedHours) {
+            List options = selectedType['hourOptions'] ?? [1, 2, 4, 8, 12];
+            final validOption = options.firstWhere((h) => (h is num && h >= reqHrs), orElse: () => null);
+            if (validOption != null) {
+              hours = validOption.toDouble();
+              String newPkg;
+              if (validOption == 24 && tripType.value == "Round Trip") {
+                newPkg = "1 Day";
+              } else {
+                newPkg = "${validOption.toInt()} Hr${validOption > 1 ? 's' : ''}";
+              }
+              if (selectedPackage.value != newPkg) {
+                selectedPackage.value = newPkg;
+              }
+            }
+          }
+        }
+
+        if (tripType.value == "Round Trip") {
+          final bool useEstHours = isOutstationFlow.value 
+              ? outstationRoundUseEstimatedHours.value 
+              : localRoundUseEstimatedHours.value;
+          if (useEstHours) {
+            hourlyCost.value = hours * selectedHourPrice.value;
+          } else {
+            hourlyCost.value = (hours / 24) * selectedDayPrice.value;
+          }
+        } else {
+          hourlyCost.value = hours * selectedHourPrice.value;
+        }
       }
       
       double returnChg = 0.0;
@@ -955,7 +1060,19 @@ class SelectRideController extends GetxController {
       isLoadingTripTypes.value = false;
     }
   }
-
+  Future<void> fetchRidePackages() async {
+    try {
+      isLoadingPackages.value = true;
+      final List<dynamic> pkgs = await ApiService.getRidePackages();
+      if (pkgs.isNotEmpty) {
+        ridePackagesList.value = pkgs;
+      }
+    } catch (e) {
+      debugPrint("Error fetching ride packages: $e");
+    } finally {
+      isLoadingPackages.value = false;
+    }
+  }
   Future<void> fetchPricingSettings() async {
     final settings = await ApiService.getPublicSettings();
     if (settings.containsKey('enable_geofence_boundary')) {
@@ -1044,6 +1161,24 @@ class SelectRideController extends GetxController {
     if (settings.containsKey('outstation_one_way_enable_return_charge')) {
       final val = settings['outstation_one_way_enable_return_charge'];
       outstationOneWayEnableReturnCharge.value = (val == true || val.toString().toLowerCase() == 'true');
+    }
+    if (settings.containsKey('local_extra_hour_rate')) {
+      localExtraHourRate.value = double.tryParse(settings['local_extra_hour_rate'].toString()) ?? 80.0;
+    }
+    if (settings.containsKey('outstation_extra_hour_rate')) {
+      outstationExtraHourRate.value = double.tryParse(settings['outstation_extra_hour_rate'].toString()) ?? 100.0;
+    }
+    if (settings.containsKey('local_one_way_extra_km_rate')) {
+      localOneWayExtraKmRate.value = double.tryParse(settings['local_one_way_extra_km_rate'].toString()) ?? 7.5;
+    }
+    if (settings.containsKey('outstation_extra_km_rate')) {
+      outstationExtraKmRate.value = double.tryParse(settings['outstation_extra_km_rate'].toString()) ?? 10.0;
+    }
+    if (settings.containsKey('night_charge_rate')) {
+      nightChargeRate.value = double.tryParse(settings['night_charge_rate'].toString()) ?? 200.0;
+    }
+    if (settings.containsKey('outstation_tour_daily_rate')) {
+      outstationTourDailyRate.value = double.tryParse(settings['outstation_tour_daily_rate'].toString()) ?? 1500.0;
     }
   }
 

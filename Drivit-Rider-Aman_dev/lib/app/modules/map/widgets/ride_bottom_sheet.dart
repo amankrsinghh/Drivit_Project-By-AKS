@@ -509,35 +509,65 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
             return const SizedBox.shrink();
           }
 
-          final selectedType = controller.tripTypesList
-              .firstWhereOrNull((t) => t['name'].toString().trim().toLowerCase() == controller.tripType.value.trim().toLowerCase());
-          
-          if (selectedType == null) {
-            return const SizedBox(height: 10);
+          final String category = controller.isOutstationFlow.value
+              ? (controller.tripType.value == "Round Trip" ? 'outstation_round' : 'outstation_one_way')
+              : (controller.tripType.value == "Round Trip" ? 'local_round' : 'local_one_way');
+
+          final activePkgs = controller.ridePackagesList
+              .where((p) => p['category'] == category && p['status'] == 'Active')
+              .toList();
+
+          List<String> packages = [];
+
+          if (activePkgs.isNotEmpty) {
+            int minHours = controller.requiredHours.value.toInt();
+            final filteredPkgs = activePkgs
+                .where((p) => (p['durationHours'] as num).toInt() >= minHours)
+                .toList();
+
+            if (controller.requiredHours.value > controller.maxAllowedHours) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Text("Out of range of available time options.", 
+                  style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+              );
+            }
+
+            if (filteredPkgs.isEmpty) {
+              return const SizedBox(height: 10);
+            }
+
+            packages = filteredPkgs.map((p) => p['name'].toString()).toList();
+          } else {
+            // Legacy/fallback options
+            final selectedType = controller.tripTypesList
+                .firstWhereOrNull((t) => t['name'].toString().trim().toLowerCase() == controller.tripType.value.trim().toLowerCase());
+            
+            if (selectedType == null) {
+              return const SizedBox(height: 10);
+            }
+
+            final List originalOptions = selectedType['hourOptions'] as List;
+            int minHours = controller.requiredHours.value.toInt();
+            List options = originalOptions.where((h) => h is num && h >= minHours).toList();
+
+            if (controller.requiredHours.value > controller.maxAllowedHours) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Text("Out of range of available time options.", 
+                  style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+              );
+            }
+
+            if (options.isEmpty) {
+              return const SizedBox(height: 10);
+            }
+
+            packages = options.map((h) {
+              if (h == 24 && controller.tripType.value == "Round Trip") return "1 Day";
+              return "$h Hr${h > 1 ? 's' : ''}";
+            }).toList();
           }
-
-          final List originalOptions = selectedType['hourOptions'] as List;
-          
-          // Filter options based directly on the physical distance limit
-          int minHours = controller.requiredHours.value.toInt();
-          List options = originalOptions.where((h) => h is num && h >= minHours).toList();
-
-          if (controller.requiredHours.value > controller.maxAllowedHours) {
-             return const Padding(
-               padding: EdgeInsets.symmetric(vertical: 10),
-               child: Text("Out of range of available time options.", 
-                 style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-             );
-          }
-
-          if (options.isEmpty) {
-            return const SizedBox(height: 10);
-          }
-
-          final packages = options.map((h) {
-            if (h == 24 && controller.tripType.value == "Round Trip") return "1 Day";
-            return "$h Hr${h > 1 ? 's' : ''}";
-          }).toList();
 
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,

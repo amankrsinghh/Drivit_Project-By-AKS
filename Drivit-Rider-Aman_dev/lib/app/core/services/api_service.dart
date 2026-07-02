@@ -74,6 +74,20 @@ class ApiService {
     }
   }
 
+  static Future<List<dynamic>> getRidePackages() async {
+    try {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final response = await http.get(Uri.parse('$baseUrl/ride-packages?t=$timestamp'));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching ride packages: $e');
+      return [];
+    }
+  }
+
   static Future<List<dynamic>> getAllPackages() async {
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
