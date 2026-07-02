@@ -926,9 +926,42 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                 children: [
                   Expanded(
                     child: Text(
-                      controller.tripType.value == "Round Trip"
-                          ? "Round Trip Package (${controller.selectedPackage.value} @ ₹${(controller.selectedHourPrice.value * 24).toStringAsFixed(0)}/day)"
-                          : "Time Package (${controller.selectedPackage.value} @ ₹${controller.selectedHourPrice.value.toStringAsFixed(0)}/hr)",
+                      () {
+                        final pkgName = controller.selectedPackage.value;
+                        final String category = controller.isOutstationFlow.value
+                            ? (controller.tripType.value == "Round Trip" ? 'outstation_round' : 'outstation_one_way')
+                            : (controller.tripType.value == "Round Trip" ? 'local_round' : 'local_one_way');
+
+                        final activePkgs = controller.ridePackagesList
+                            .where((p) => p['category'] == category && p['status'] == 'Active')
+                            .toList();
+
+                        final matchedPkg = activePkgs.firstWhereOrNull(
+                          (p) => p['name'].toString().toLowerCase().trim() == pkgName.toLowerCase().trim()
+                        );
+
+                        if (matchedPkg != null) {
+                          final double rate = (matchedPkg['rate'] as num).toDouble();
+                          final double hrs = (matchedPkg['durationHours'] as num).toDouble();
+                          if (hrs > 24) {
+                            final double days = (hrs / 24).ceilToDouble();
+                            return "${controller.tripType.value} Package ($pkgName @ ₹${(rate / days).toStringAsFixed(0)}/day)";
+                          }
+                          return "${controller.tripType.value} Package ($pkgName @ ₹${rate.toStringAsFixed(0)})";
+                        }
+
+                        // Fallback
+                        if (controller.tripType.value == "Round Trip") {
+                          final double hrs = pkgName.toLowerCase().contains("day")
+                              ? (double.tryParse(pkgName.split(" ")[0]) ?? 1.0) * 24.0
+                              : double.tryParse(pkgName.split(" ")[0]) ?? 24.0;
+                          if (hrs > 24) {
+                            return "Round Trip Package ($pkgName @ ₹${controller.selectedDayPrice.value.toStringAsFixed(0)}/day)";
+                          }
+                          return "Round Trip Package ($pkgName @ ₹${controller.selectedHourPrice.value.toStringAsFixed(0)}/hr)";
+                        }
+                        return "Time Package ($pkgName @ ₹${controller.selectedHourPrice.value.toStringAsFixed(0)}/hr)";
+                      }(),
                       style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                       softWrap: true,
                     ),
