@@ -135,11 +135,9 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                                   const SizedBox(height: 12),
                                   _buildCarWashSelection(),
                                   const SizedBox(height: 12),
-                                  if (controller.isOutstationFlow.value) ...[
+                                  if (!controller.isAirportFlow.value) ...[
                                     _buildTripTypeSelection(),
                                     const SizedBox(height: 12),
-                                  ],
-                                  if (!controller.isAirportFlow.value) ...[
                                     _buildPackageSelection(),
                                     const SizedBox(height: 12),
                                   ],
@@ -320,11 +318,7 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
 
           final filteredList = controller.tripTypesList.where((type) {
             final name = type['name'].toString().trim().toLowerCase();
-            if (controller.isOutstationFlow.value) {
-              return name == 'one way' || name == 'round trip';
-            } else {
-              return name == 'local';
-            }
+            return name == 'one way' || name == 'round trip';
           }).toList();
 
           return Row(

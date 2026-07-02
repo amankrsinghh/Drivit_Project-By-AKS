@@ -469,7 +469,7 @@ class _DriverNewRequestViewState extends State<DriverNewRequestView> {
                         "${() {
                           final bool isOutstation = controller.rideData['isOutstation'] == true || controller.rideData['isOutstation'] == 'true';
                           final String tripType = controller.rideData['tripType']?.toString() ?? 'One Way';
-                          return isOutstation ? 'Outstation · $tripType' : 'Local';
+                          return isOutstation ? 'Outstation · $tripType' : 'Local · $tripType';
                         }()} • ${controller.rideData['carPackage'] ?? controller.rideData['package'] ?? '-'}",
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),

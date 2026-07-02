@@ -224,7 +224,7 @@ class _DriverNewRequestPopupState extends State<DriverNewRequestPopup> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        isOutstation ? 'Outstation · $tripType' : 'Local',
+                        isOutstation ? 'Outstation · $tripType' : 'Local · $tripType',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,

@@ -73,6 +73,14 @@ class SelectRideController extends GetxController {
   final localEnableReturnCharge = false.obs;
   final localReturnChargeRate = 10.0.obs;
   final localShowEstimatedHours = true.obs;
+
+  final localOneWayShowEstimatedHours = true.obs;
+  final localOneWayEnableReturnCharge = false.obs;
+  final localOneWayReturnChargeRate = 10.0.obs;
+
+  final localRoundUseEstimatedHours = false.obs;
+  final localRoundEnableReturnCharge = false.obs;
+  final localRoundReturnChargeRate = 10.0.obs;
   
   final outstationRoundUseEstimatedHours = false.obs;
   final outstationRoundEnableReturnCharge = false.obs;
@@ -83,7 +91,11 @@ class SelectRideController extends GetxController {
 
   bool get shouldShowEstimatedHours {
     if (!isOutstationFlow.value) {
-      return localShowEstimatedHours.value;
+      if (tripType.value == "One Way") {
+        return localOneWayShowEstimatedHours.value;
+      } else {
+        return localRoundUseEstimatedHours.value;
+      }
     } else {
       if (tripType.value == "One Way") {
         return outstationOneWayShowEstimatedHours.value;
@@ -209,6 +221,9 @@ class SelectRideController extends GetxController {
       }
       if (args["tripType"] == "Outstation") {
         isOutstationFlow.value = true;
+        tripType.value = "One Way";
+      } else if (args["tripType"] == "Local") {
+        isOutstationFlow.value = false;
         tripType.value = "One Way";
       } else if (args["tripType"] != null && args["tripType"] != "airport") {
         tripType.value = args["tripType"];
@@ -804,7 +819,10 @@ class SelectRideController extends GetxController {
       }
 
       if (tripType.value == "Round Trip") {
-        if (outstationRoundUseEstimatedHours.value) {
+        final bool useEstHours = isOutstationFlow.value 
+            ? outstationRoundUseEstimatedHours.value 
+            : localRoundUseEstimatedHours.value;
+        if (useEstHours) {
           hourlyCost.value = hours * selectedHourPrice.value;
         } else {
           hourlyCost.value = (hours / 24) * selectedDayPrice.value;
@@ -825,8 +843,14 @@ class SelectRideController extends GetxController {
           }
         }
       } else {
-        if (localEnableReturnCharge.value) {
-          returnChg = (dist * localReturnChargeRate.value * multiplier).roundToDouble();
+        if (tripType.value == "One Way") {
+          if (localOneWayEnableReturnCharge.value) {
+            returnChg = (dist * localOneWayReturnChargeRate.value * multiplier).roundToDouble();
+          }
+        } else if (tripType.value == "Round Trip") {
+          if (localRoundEnableReturnCharge.value) {
+            returnChg = (dist * localRoundReturnChargeRate.value * multiplier).roundToDouble();
+          }
         }
       }
       returnCharge.value = returnChg;
@@ -874,8 +898,14 @@ class SelectRideController extends GetxController {
           }
         }
       } else {
-        if (localEnableReturnCharge.value) {
-          returnChg = (dist * localReturnChargeRate.value * multiplier).roundToDouble();
+        if (tripType.value == "One Way") {
+          if (localOneWayEnableReturnCharge.value) {
+            returnChg = (dist * localOneWayReturnChargeRate.value * multiplier).roundToDouble();
+          }
+        } else if (tripType.value == "Round Trip") {
+          if (localRoundEnableReturnCharge.value) {
+            returnChg = (dist * localRoundReturnChargeRate.value * multiplier).roundToDouble();
+          }
         }
       }
       returnCharge.value = returnChg;
@@ -914,11 +944,11 @@ class SelectRideController extends GetxController {
         tripTypesList.value = types;
         // set default to first one if compatible or if currently at default
         if (tripTypesList.isNotEmpty) {
-          final defaultName = isOutstationFlow.value ? "One Way" : "Local";
+          final defaultName = "One Way";
           final existingType = tripTypesList.firstWhereOrNull(
             (t) => t['name'].toString().trim().toLowerCase() == tripType.value.trim().toLowerCase(),
           );
-          if (tripType.value.isEmpty || existingType == null || (isOutstationFlow.value && tripType.value == "Local") || (!isOutstationFlow.value && tripType.value != "Local")) {
+          if (tripType.value.isEmpty || existingType == null || tripType.value == "Local") {
             final target = tripTypesList.firstWhereOrNull((t) => t['name'].toString().trim().toLowerCase() == defaultName.toLowerCase());
             tripType.value = target != null ? target['name'] : tripTypesList.first['name'];
           }
@@ -979,6 +1009,28 @@ class SelectRideController extends GetxController {
     if (settings.containsKey('local_show_estimated_hours')) {
       final val = settings['local_show_estimated_hours'];
       localShowEstimatedHours.value = (val == true || val.toString().toLowerCase() == 'true');
+    }
+    if (settings.containsKey('local_one_way_show_estimated_hours')) {
+      final val = settings['local_one_way_show_estimated_hours'];
+      localOneWayShowEstimatedHours.value = (val == true || val.toString().toLowerCase() == 'true');
+    }
+    if (settings.containsKey('local_one_way_enable_return_charge')) {
+      final val = settings['local_one_way_enable_return_charge'];
+      localOneWayEnableReturnCharge.value = (val == true || val.toString().toLowerCase() == 'true');
+    }
+    if (settings.containsKey('local_one_way_return_charge_rate')) {
+      localOneWayReturnChargeRate.value = double.tryParse(settings['local_one_way_return_charge_rate'].toString()) ?? 10.0;
+    }
+    if (settings.containsKey('local_round_use_estimated_hours')) {
+      final val = settings['local_round_use_estimated_hours'];
+      localRoundUseEstimatedHours.value = (val == true || val.toString().toLowerCase() == 'true');
+    }
+    if (settings.containsKey('local_round_enable_return_charge')) {
+      final val = settings['local_round_enable_return_charge'];
+      localRoundEnableReturnCharge.value = (val == true || val.toString().toLowerCase() == 'true');
+    }
+    if (settings.containsKey('local_round_return_charge_rate')) {
+      localRoundReturnChargeRate.value = double.tryParse(settings['local_round_return_charge_rate'].toString()) ?? 10.0;
     }
     if (settings.containsKey('outstation_round_use_estimated_hours')) {
       final val = settings['outstation_round_use_estimated_hours'];
@@ -1349,6 +1401,7 @@ class SelectRideController extends GetxController {
         packageDuration: selectedPackage.value,
         tripType: tripType.value,
         distance: distance,
+        isOutstation: isOutstationFlow.value,
       );
 
       debugPrint("🚕 BN[9]: calculateRideFare result → $fareRes");
