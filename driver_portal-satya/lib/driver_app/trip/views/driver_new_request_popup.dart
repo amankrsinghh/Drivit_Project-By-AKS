@@ -322,19 +322,20 @@ class _DriverNewRequestPopupState extends State<DriverNewRequestPopup> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Expanded(
-                  child: _Stat(
-                    icon: Icons.access_time,
-                    label: isRoundTrip ? "Time" : "ETA",
-                    value: isRoundTrip ? package : (() {
-                      int mins = int.tryParse(widget.ride['estimatedTime']?.toString() ?? '15') ?? 15;
-                      if (mins > 60) {
-                        return "${mins ~/ 60}:${(mins % 60).toString().padLeft(2, '0')} hr:min";
-                      }
-                      return "${mins}min";
-                    })(),
+                if (ApiService.showEstimatedTime || isRoundTrip)
+                  Expanded(
+                    child: _Stat(
+                      icon: Icons.access_time,
+                      label: isRoundTrip ? "Time" : "ETA",
+                      value: isRoundTrip ? package : (() {
+                        int mins = int.tryParse(widget.ride['estimatedTime']?.toString() ?? '15') ?? 15;
+                        if (mins > 60) {
+                          return "${mins ~/ 60}:${(mins % 60).toString().padLeft(2, '0')} hr:min";
+                        }
+                        return "${mins}min";
+                      })(),
+                    ),
                   ),
-                ),
                 Expanded(
                   child: _Stat(
                     icon: Icons.attach_money,

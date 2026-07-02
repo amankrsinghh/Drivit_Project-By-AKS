@@ -126,11 +126,11 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                                   const SizedBox(height: 12),
                                   _buildCarWashSelection(),
                                   const SizedBox(height: 12),
-                                  if (controller.isOutstationFlow.value) ...[
+                                  if (!controller.isAirportFlow.value) ...[
                                     _buildTripTypeSelection(),
                                     const SizedBox(height: 12),
                                   ],
-                                  if (controller.isOutstationFlow.value) ...[
+                                  if (!controller.isAirportFlow.value) ...[
                                     _buildPackageSelection(),
                                     const SizedBox(height: 12),
                                   ],
@@ -555,14 +555,16 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "${controller.estimatedTime.value.toInt()} mins",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
+                          if (controller.showEstimatedTime.value) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              "${controller.estimatedTime.value.toInt()} mins",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
@@ -1210,6 +1212,24 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                             ),
                             const SizedBox(height: 8),
                           ],
+                          if (controller.returnCharge.value > 0) ...[
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    "Return Charge",
+                                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                                  ),
+                                ),
+                                Text(
+                                  "₹${controller.returnCharge.value.toStringAsFixed(2)}",
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                          ],
                           if (hourlyCost > 0) ...[
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1299,12 +1319,28 @@ class _RideBottomSheetState extends State<RideBottomSheet> {
                             children: [
                               Expanded(
                                 child: Text(
+                                  "Subtotal",
+                                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                                ),
+                              ),
+                              Text(
+                                "₹${(baseCost + carWashCharge + platformCharge + gstAmount + controller.returnCharge.value).toStringAsFixed(2)}",
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
                                   "Rounding",
                                   style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                                 ),
                               ),
                               Text(
-                                "₹${(totalAmount - (baseCost + carWashCharge + platformCharge + gstAmount)).toStringAsFixed(2)}",
+                                "₹${(totalAmount - (baseCost + carWashCharge + platformCharge + gstAmount + controller.returnCharge.value)).toStringAsFixed(2)}",
                                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                               ),
                             ],

@@ -81,6 +81,7 @@ class FindingDriverController extends GetxController {
   final selectedReason = RxnString();
   final isCancellationPaymentFlow = false.obs;
   final cancellationFeePercent = 10.0.obs;  // default 10%, fetched from settings
+  final showEstimatedTime = true.obs;
   final reasonTextController = TextEditingController();
 
   // Trip completed data
@@ -183,6 +184,8 @@ class FindingDriverController extends GetxController {
     _loadCustomMarker();
     _setupMapWorkers();
 
+    _fetchSettings();
+
     // Start timer if finding
     if (stage.value == BookingStage.finding) {
       _startSearchTimer();
@@ -193,6 +196,18 @@ class FindingDriverController extends GetxController {
       const Duration(milliseconds: 1000),
       () => _fitBounds(force: true),
     );
+  }
+
+  Future<void> _fetchSettings() async {
+    try {
+      final settings = await ApiService.getPublicSettings();
+      if (settings.containsKey('show_estimated_time')) {
+        final val = settings['show_estimated_time'];
+        showEstimatedTime.value = (val == true || val.toString().toLowerCase() == 'true');
+      }
+    } catch (e) {
+      debugPrint("Error fetching settings in FindingDriverController: $e");
+    }
   }
 
   void _loadCustomMarker() async {

@@ -23,6 +23,7 @@ class ApiService {
   static bool enableGeofenceBoundary = false;
   static int freeRidesCount = 3;
   static bool initialOnlineStatus = false;
+  static bool showEstimatedTime = true;
 
 
   static Future<Map<String, dynamic>> getPublicSettings() async {

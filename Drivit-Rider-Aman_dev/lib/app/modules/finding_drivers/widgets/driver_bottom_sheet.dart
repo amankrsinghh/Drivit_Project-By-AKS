@@ -670,7 +670,7 @@ class _TripStartedUI extends StatelessWidget {
         const SizedBox(height: 10),
         Obx(
           () => _TripTile(
-            title: "Trip End (Estimated Time)",
+            title: controller.showEstimatedTime.value ? "Trip End (Estimated Time)" : "Trip End",
             subtitle: controller.destination.value,
           ),
         ),

@@ -67,6 +67,9 @@ class SelectRideController extends GetxController {
   final subtotal = 0.0.obs;
   final gstAmount = 0.0.obs;
   final requireCarWash = false.obs;
+  final returnCharge = 0.0.obs;
+  final showEstimatedTime = true.obs;
+  final includeReturnCharges = false.obs;
   final sheetExtent = 0.6.obs;
 
   final isPickupFocused = false.obs;
@@ -693,7 +696,7 @@ class SelectRideController extends GetxController {
       distanceCost.value = (dist * basePricePerKm.value * multiplier).roundToDouble();
 
       double hours = 0.0;
-      if (isAirportFlow.value || !isOutstationFlow.value) {
+      if (isAirportFlow.value) {
         selectedPackage.value = "";
         hours = 0.0;
       } else {
@@ -732,11 +735,18 @@ class SelectRideController extends GetxController {
         usageCost.value = distanceCost.value;
         carWashCharge.value = 0.0;
         hourlyCost.value = 0.0;
+        returnCharge.value = 0.0;
       } else {
+        double retChg = 0.0;
+        if (includeReturnCharges.value && tripType.value == "One Way") {
+          retChg = distanceCost.value;
+        }
+        returnCharge.value = retChg.roundToDouble();
+
         if (tripType.value == "Round Trip") {
           usageCost.value = hourlyCost.value;
         } else {
-          usageCost.value = distanceCost.value + hourlyCost.value;
+          usageCost.value = distanceCost.value + hourlyCost.value + returnCharge.value;
         }
         if (requireCarWash.value) {
           carWashCharge.value = carWashPriceSetting.value;
@@ -758,7 +768,14 @@ class SelectRideController extends GetxController {
 
       distanceCost.value = (dist * basePricePerKm.value * multiplier).roundToDouble();
       hourlyCost.value = 0.0;
-      usageCost.value = distanceCost.value;
+
+      double retChg = 0.0;
+      if (includeReturnCharges.value && tripType.value == "One Way" && !isAirportFlow.value) {
+        retChg = distanceCost.value;
+      }
+      returnCharge.value = retChg.roundToDouble();
+
+      usageCost.value = distanceCost.value + returnCharge.value;
       carWashCharge.value = 0.0;
       totalPrice.value = usageCost.value.roundToDouble();
       
@@ -838,6 +855,14 @@ class SelectRideController extends GetxController {
     if (settings.containsKey('gst_percentage')) {
       gstPercentage.value =
           double.tryParse(settings['gst_percentage'].toString()) ?? 5.0;
+    }
+    if (settings.containsKey('show_estimated_time')) {
+      final val = settings['show_estimated_time'];
+      showEstimatedTime.value = (val == true || val.toString().toLowerCase() == 'true');
+    }
+    if (settings.containsKey('include_return_charges')) {
+      final val = settings['include_return_charges'];
+      includeReturnCharges.value = (val == true || val.toString().toLowerCase() == 'true');
     }
   }
 
@@ -1199,6 +1224,7 @@ class SelectRideController extends GetxController {
         packageDuration: selectedPackage.value,
         tripType: tripType.value,
         distance: distance,
+        isOutstation: isOutstationFlow.value,
       );
 
       debugPrint("🚕 BN[9]: calculateRideFare result → $fareRes");
@@ -1250,6 +1276,7 @@ class SelectRideController extends GetxController {
         platformCharge: platformCharge.value,
         gst: finalGst,
         isOutstation: isOutstationFlow.value,
+        returnCharge: returnCharge.value,
       );
 
       debugPrint("🚕 BN[11]: bookRide response keys=${res.keys.toList()}, hasError=${res.containsKey('error')}");

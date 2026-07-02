@@ -36,6 +36,7 @@ void main() async {
       prefs.getBool('enable_geofence_boundary') ?? false;
   ApiService.freeRidesCount = prefs.getInt('free_rides_count') ?? 3;
   ApiService.initialOnlineStatus = prefs.getBool('is_online') ?? false;
+  ApiService.showEstimatedTime = prefs.getBool('show_estimated_time') ?? true;
 
   // Fetch settings in background to avoid blocking app launch
   ApiService.getPublicSettings()
@@ -56,6 +57,16 @@ void main() async {
           ApiService.freeRidesCount = val;
           await prefs.setInt('free_rides_count', val);
           debugPrint("Driver Free Rides Limit Loaded from Backend: $val");
+        }
+
+        if (settings.containsKey('show_estimated_time')) {
+          final freshShowEst = settings['show_estimated_time'];
+          final bool val =
+              freshShowEst == true ||
+              freshShowEst.toString().toLowerCase() == 'true';
+          ApiService.showEstimatedTime = val;
+          await prefs.setBool('show_estimated_time', val);
+          debugPrint("Driver Show Estimated Time Loaded from Backend: $val");
         }
 
         if (settings.containsKey('google_maps_api_key')) {

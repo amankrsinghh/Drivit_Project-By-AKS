@@ -904,6 +904,7 @@ class ApiService {
     String? packageDuration,
     String? tripType,
     double? distance,
+    bool? isOutstation,
   }) async {
     try {
       final response = await http.post(
@@ -914,6 +915,7 @@ class ApiService {
           'packageDuration': packageDuration,
           'tripType': tripType,
           'distance': distance,
+          'isOutstation': isOutstation,
         }),
       );
       return _processResponse(response);
@@ -949,6 +951,7 @@ class ApiService {
     double? platformCharge,
     double? gst,
     bool isOutstation = false,
+    double? returnCharge,
   }) async {
     try {
       final customerId = await getCustomerId();
@@ -984,6 +987,7 @@ class ApiService {
           'platformCharge': platformCharge,
           'gst': gst,
           'isOutstation': isOutstation,
+          'returnCharge': returnCharge,
         }),
       );
       return _processResponse(response);
