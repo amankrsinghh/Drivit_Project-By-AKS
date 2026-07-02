@@ -716,12 +716,6 @@ class SelectRideController extends GetxController {
   void calculateTotalPrice() {
     try {
       isCalculatingPrices.value = true;
-      final typeName = tripType.value.trim().toLowerCase();
-      if (typeName == "one way" || typeName == "round trip") {
-        isOutstationFlow.value = true;
-      } else {
-        isOutstationFlow.value = false;
-      }
     double pLat = pickupLat.value;
     double pLng = pickupLng.value;
     

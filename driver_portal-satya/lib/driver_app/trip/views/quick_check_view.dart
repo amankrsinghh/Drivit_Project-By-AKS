@@ -572,7 +572,7 @@ class DriverQuickCheckView extends GetView<DriverTripController> {
           Switch(
             value: value.value,                 // ✅ ON/OFF dynamic
             onChanged: (v) => value.value = v,  // ✅ update
-            activeThumbColor: DriverColors.primary,
+            activeColor: DriverColors.primary,
             activeTrackColor: DriverColors.primary.withValues(alpha: 0.35),
             inactiveTrackColor: const Color(0xFFDDDDDD),
           ),

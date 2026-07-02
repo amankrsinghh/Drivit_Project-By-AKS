@@ -486,7 +486,7 @@ class DriverHomeTabView extends GetView<DriverHomeController> {
                         Switch(
                           value: online,
                           onChanged: controller.toggleOnline,
-                          activeThumbColor: Colors.white,
+                          activeColor: Colors.white,
                           inactiveThumbColor: Colors.white,
                           inactiveTrackColor: Colors.white24,
                           activeTrackColor: Colors.white24,

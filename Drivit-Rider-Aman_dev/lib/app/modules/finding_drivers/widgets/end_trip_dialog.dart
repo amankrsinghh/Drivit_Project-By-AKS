@@ -49,7 +49,7 @@ class EndTripReasonDialog extends StatelessWidget {
 
             // select reason
             Obx(() => DropdownButtonFormField<String>(
-              initialValue: selectedReason.value,
+              value: selectedReason.value,
               items: reasons
                   .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                   .toList(),
